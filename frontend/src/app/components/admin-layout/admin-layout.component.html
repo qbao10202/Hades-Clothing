@@ -1,0 +1,110 @@
+<div class="admin-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.collapsed]="!sidebarOpen">
+    <!-- Logo -->
+    <div class="sidebar-header">
+      <div class="logo">
+        <img src="assets/logo.png" alt="Logo" class="logo-img">
+        <span class="logo-text" *ngIf="sidebarOpen">tuks</span>
+      </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="sidebar-nav">
+      <h6 class="nav-section" *ngIf="sidebarOpen">MENU</h6>
+      
+      <ul class="nav-list">
+        <li class="nav-item">
+          <a routerLink="/admin/dashboard" routerLinkActive="active" class="nav-link">
+            <mat-icon>dashboard</mat-icon>
+            <span *ngIf="sidebarOpen">Dashboard</span>
+          </a>
+        </li>
+        
+        <li class="nav-item">
+          <a routerLink="/admin/products" routerLinkActive="active" class="nav-link">
+            <mat-icon>inventory</mat-icon>
+            <span *ngIf="sidebarOpen">Products</span>
+          </a>
+        </li>
+        
+        <li class="nav-item">
+          <a routerLink="/admin/categories" routerLinkActive="active" class="nav-link">
+            <mat-icon>category</mat-icon>
+            <span *ngIf="sidebarOpen">Category</span>
+          </a>
+        </li>
+        
+        <li class="nav-item">
+          <a routerLink="/admin/orders" routerLinkActive="active" class="nav-link">
+            <mat-icon>receipt_long</mat-icon>
+            <span *ngIf="sidebarOpen">Orders</span>
+          </a>
+        </li>
+        
+        <li class="nav-item">
+          <a routerLink="/admin/users" routerLinkActive="active" class="nav-link">
+            <mat-icon>people</mat-icon>
+            <span *ngIf="sidebarOpen">Customer</span>
+          </a>
+        </li>
+        
+        <li class="nav-item">
+          <a routerLink="/admin/coupons" routerLinkActive="active" class="nav-link">
+            <mat-icon>local_offer</mat-icon>
+            <span *ngIf="sidebarOpen">Coupons</span>
+          </a>
+        </li>
+      </ul>
+
+      <h6 class="nav-section" *ngIf="sidebarOpen">OTHER</h6>
+      <ul class="nav-list">
+        <li class="nav-item">
+          <a routerLink="/admin/settings" routerLinkActive="active" class="nav-link">
+            <mat-icon>settings</mat-icon>
+            <span *ngIf="sidebarOpen">Settings</span>
+          </a>
+        </li>
+        
+        <li class="nav-item">
+          <a (click)="logout()" class="nav-link logout-link">
+            <mat-icon>logout</mat-icon>
+            <span *ngIf="sidebarOpen">Logout</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content" [class.sidebar-collapsed]="!sidebarOpen">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div class="header-left">
+        <button mat-icon-button (click)="toggleSidebar()" class="menu-toggle">
+          <mat-icon>menu</mat-icon>
+        </button>
+        <div class="search-box">
+          <mat-icon class="search-icon">search</mat-icon>
+          <input type="text" placeholder="Search something here" class="search-input">
+        </div>
+      </div>
+      
+      <div class="header-right">
+        <button mat-icon-button class="notification-btn">
+          <mat-icon [matBadge]="1" matBadgeColor="warn" matBadgeSize="small">notifications</mat-icon>
+        </button>
+        
+        <div class="user-profile">
+          <img [src]="currentUser?.avatar || 'assets/default-avatar.png'" alt="User" class="user-avatar">
+          <span class="user-name">{{ currentUser?.firstName || 'Admin' }}</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Router Outlet -->
+    <div class="content-area">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>

@@ -1,0 +1,207 @@
+spring:
+  profiles:
+    active: dev
+  application:
+    name: sales-backend
+  datasource:
+    url: jdbc:mysql://localhost:3306/sales_app?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: 
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+  security:
+    user:
+      name: root
+      password:
+  # Redis configuration - made optional
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+  # Cache configuration - fallback to simple cache if Redis is not available
+  cache:
+    type: simple
+    cache-names: products,users,orders,customers
+
+#  mail:
+#    host: smtp.gmail.com
+#    port: 587
+#    username: ${MAIL_USERNAME:your-email@gmail.com}
+#    password: ${MAIL_PASSWORD:your-app-password}
+#    properties:
+#      mail:
+#        smtp:
+#          auth: true
+#          starttls:
+#            enable: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+logging:
+  level:
+    com.salesapp: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.cache: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/application.log
+    max-size: 10MB
+    max-history: 30
+
+jwt:
+  secret: ${JWT_SECRET:your-super-secret-jwt-key-for-production-change-this}
+  expiration: ${JWT_EXPIRATION:86400000}
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+
+# Payment Gateway Configuration
+#payment:
+#  stripe:
+#    public-key: ${STRIPE_PUBLIC_KEY:pk_test_your-stripe-public-key}
+#    secret-key: ${STRIPE_SECRET_KEY:sk_test_your-stripe-secret-key}
+#  paypal:
+#    client-id: ${PAYPAL_CLIENT_ID:your-paypal-client-id}
+#    client-secret: ${PAYPAL_CLIENT_SECRET:your-paypal-client-secret}
+#    mode: sandbox
+#  momo:
+#    access-key: ${MOMO_ACCESS_KEY:your-momo-access-key}
+#    secret-key: ${MOMO_SECRET_KEY:your-momo-secret-key}
+#    endpoint: https://test-payment.momo.vn/v2/gateway/api/create
+#  vnpay:
+#    tmn-code: ${VNPAY_TMN_CODE:your-vnpay-tmn-code}
+#    hash-secret: ${VNPAY_HASH_SECRET:your-vnpay-hash-secret}
+#    url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+
+# Application Configuration
+app:
+  name: ${APP_NAME:Sales Application}
+  version: ${APP_VERSION:1.0.0}
+  environment: ${APP_ENVIRONMENT:development}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:3000}
+  file:
+    upload:
+      max-size: 10MB
+      allowed-types: image/jpeg,image/png,image/gif,application/pdf
+  notification:
+    email:
+      enabled: true
+    sms:
+      enabled: false
+  inventory:
+    low-stock-threshold: 10
+    auto-reorder: false
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:mysql://localhost:3306/sales_app?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+  # Use simple cache for dev profile
+  cache:
+    type: simple
+    cache-names: products,users,orders,customers
+
+logging:
+  level:
+    com.salesapp: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.cache: DEBUG
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/sales_app?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+  # Use simple cache for prod profile (can be overridden to Redis if needed)
+  cache:
+    type: simple
+    cache-names: products,users,orders,customers
+
+logging:
+  level:
+    com.salesapp: INFO
+    org.springframework.security: WARN
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+jwt:
+  secret: ${JWT_SECRET:your-super-secret-jwt-key-for-production-change-this}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+  # Use simple cache for local profile
+  cache:
+    type: simple
+    cache-names: products,users,orders,customers
+
+logging:
+  level:
+    com.salesapp: DEBUG
+    org.springframework.security: DEBUG
