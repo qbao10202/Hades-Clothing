@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ProductService } from '../../services/product.service';
 import { ProductDTO, Category } from '../../models';
 import { CartService } from '../../services/cart.service';
@@ -8,6 +8,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { Component as NgComponent, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { AddToCartModalComponent } from '../shared/add-to-cart-modal.component';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-product-list',
@@ -24,6 +25,7 @@ export class ProductListComponent implements OnInit, OnDestroy {
   private sub: Subscription = new Subscription();
 
   constructor(
+    private router: Router,
     private productService: ProductService,
     private cartService: CartService,
     private route: ActivatedRoute,
@@ -89,7 +91,7 @@ export class ProductListComponent implements OnInit, OnDestroy {
     if (product.images && product.images.length > 0) {
       const url = product.images[0].imageUrl;
       if (url && url.startsWith('/uploads/')) {
-        return 'http://localhost:8080' + url;
+        return this.getBackendBaseUrl() + url;
       }
       return url;
     }
@@ -101,6 +103,10 @@ export class ProductListComponent implements OnInit, OnDestroy {
       data: { images: product.images, name: product.name },
       width: '600px'
     });
+  }
+
+  goToCart(): void {
+    this.router.navigate(['/cart']);
   }
 
   onSearchChange(): void {
@@ -166,6 +172,10 @@ export class ProductListComponent implements OnInit, OnDestroy {
       });
     }
   }
+
+  getBackendBaseUrl(): string {
+    return environment.apiUrl.replace(/\/api$/, '');
+  }
 }
 
 @NgComponent({
@@ -193,8 +203,12 @@ export class ProductImageModalComponent {
   constructor(@Inject(MAT_DIALOG_DATA) public data: { images: any[], name: string }) {}
   getImageUrl(url: string): string {
     if (url && url.startsWith('/uploads/')) {
-      return 'http://localhost:8080' + url;
+      return this.getBackendBaseUrl() + url;
     }
     return url;
+  }
+
+  getBackendBaseUrl(): string {
+    return environment.apiUrl.replace(/\/api$/, '');
   }
 }

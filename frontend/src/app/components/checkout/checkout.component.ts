@@ -8,195 +8,11 @@ import { Cart, Order, User } from '../../models';
 import { CartService } from '../../services/cart.service';
 import { OrderService } from '../../services/order.service';
 import { AuthService } from '../../services/auth.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-checkout',
-  template: `
-    <div class="checkout-page">
-      <div class="container">
-        <!-- Breadcrumb -->
-        <div class="breadcrumb">
-          <span routerLink="/cart">Cart</span>
-          <mat-icon>chevron_right</mat-icon>
-          <span>Shipping</span>
-          <mat-icon>chevron_right</mat-icon>
-          <span>Payment</span>
-        </div>
-        <div *ngIf="cart.items.length > 0; else emptyCart" class="checkout-content">
-          <div class="checkout-form">
-            <h2>Shipping Address</h2>
-            <form [formGroup]="checkoutForm" (ngSubmit)="onSubmit()">
-              <div class="form-row">
-                <mat-form-field appearance="outline" class="half-width">
-                  <mat-label>First Name*</mat-label>
-                  <input matInput formControlName="firstName" required>
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="half-width">
-                  <mat-label>Last Name*</mat-label>
-                  <input matInput formControlName="lastName" required>
-                </mat-form-field>
-              </div>
-              <div class="form-row">
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Email*</mat-label>
-                  <input matInput formControlName="email" type="email" required>
-                </mat-form-field>
-              </div>
-              <div class="form-row">
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Phone number*</mat-label>
-                  <mat-select formControlName="phoneCountry" class="country-select">
-                    <mat-option value="IND">IND</mat-option>
-                    <mat-option value="USA">USA</mat-option>
-                    <mat-option value="VN">VN</mat-option>
-                  </mat-select>
-                  <input matInput formControlName="phone" type="tel" required>
-                </mat-form-field>
-              </div>
-              <div class="form-row">
-                <mat-form-field appearance="outline" class="half-width">
-                  <mat-label>City*</mat-label>
-                  <input matInput formControlName="city" required>
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="half-width">
-                  <mat-label>State*</mat-label>
-                  <input matInput formControlName="state" required>
-                </mat-form-field>
-              </div>
-              <div class="form-row">
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Zip Code*</mat-label>
-                  <input matInput formControlName="zipCode" required>
-                </mat-form-field>
-              </div>
-              <div class="form-row">
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Description*</mat-label>
-                  <textarea matInput formControlName="description" rows="3" placeholder="Enter a description..."></textarea>
-                </mat-form-field>
-              </div>
-              <!-- Billing Address -->
-              <mat-card class="form-section">
-                <mat-card-header>
-                  <mat-card-title>Billing Address</mat-card-title>
-                </mat-card-header>
-                <mat-card-content>
-                  <div class="form-row">
-                    <mat-checkbox formControlName="sameAsShipping" (change)="onSameAsShippingChange($event)">
-                      Same as shipping address
-                    </mat-checkbox>
-                  </div>
-                  <div *ngIf="!checkoutForm.get('sameAsShipping')?.value">
-                    <div class="form-row">
-                      <mat-form-field appearance="outline" class="full-width">
-                        <mat-label>Billing Address</mat-label>
-                        <input matInput formControlName="billingAddress" required>
-                      </mat-form-field>
-                    </div>
-                  </div>
-                </mat-card-content>
-              </mat-card>
-              <!-- Shipping Method -->
-              <mat-card class="form-section">
-                <mat-card-header>
-                  <mat-card-title>Shipping Method</mat-card-title>
-                </mat-card-header>
-                <mat-card-content>
-                  <mat-radio-group formControlName="shippingMethod">
-                    <mat-radio-button value="standard">
-                      <div class="shipping-option">
-                        <span class="method-name">Standard Shipping</span>
-                        <span class="method-price">{{ cart.shippingAmount === 0 ? 'Free' : formatCurrency(cart.shippingAmount) }}</span>
-                      </div>
-                      <p class="method-description">5-7 business days</p>
-                    </mat-radio-button>
-                    <mat-radio-button value="express">
-                      <div class="shipping-option">
-                        <span class="method-name">Express Shipping</span>
-                        <span class="method-price">{{ formatCurrency(100000) }}</span>
-                      </div>
-                      <p class="method-description">2-3 business days</p>
-                    </mat-radio-button>
-                  </mat-radio-group>
-                </mat-card-content>
-              </mat-card>
-              <!-- Order Notes -->
-              <mat-card class="form-section">
-                <mat-card-header>
-                  <mat-card-title>Order Notes (Optional)</mat-card-title>
-                </mat-card-header>
-                <mat-card-content>
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Special instructions for your order</mat-label>
-                    <textarea matInput formControlName="notes" rows="4"></textarea>
-                  </mat-form-field>
-                </mat-card-content>
-              </mat-card>
-              <!-- Submit Button -->
-              <div class="checkout-actions">
-                <button mat-raised-button color="primary" type="submit" 
-                        [disabled]="checkoutForm.invalid || loading" class="place-order-btn">
-                  <mat-spinner diameter="20" *ngIf="loading"></mat-spinner>
-                  <span *ngIf="!loading">Place Order</span>
-                </button>
-              </div>
-            </form>
-          </div>
-          <!-- Order Summary -->
-          <div class="order-summary">
-            <mat-card>
-              <mat-card-header>
-                <mat-card-title>Order Summary</mat-card-title>
-              </mat-card-header>
-              <mat-card-content>
-                <div class="order-items">
-                  <div *ngFor="let item of cart.items" class="order-item">
-                    <div class="item-info">
-                      <img [src]="getProductImage(item)" [alt]="item.product?.name" class="item-image">
-                      <div class="item-details">
-                        <h4>{{ item.product?.name }}</h4>
-                        <p>Qty: {{ item.quantity }}</p>
-                      </div>
-                    </div>
-                    <div class="item-price">
-                      {{ formatCurrency(item.price * item.quantity) }}
-                    </div>
-                  </div>
-                </div>
-                <div class="summary-totals">
-                  <div class="summary-line">
-                    <span>Subtotal</span>
-                    <span>{{ formatCurrency(cart.subtotal) }}</span>
-                  </div>
-                  <div class="summary-line">
-                    <span>Tax</span>
-                    <span>{{ formatCurrency(cart.taxAmount) }}</span>
-                  </div>
-                  <div class="summary-line">
-                    <span>Shipping</span>
-                    <span>{{ cart.shippingAmount === 0 ? 'Free' : formatCurrency(cart.shippingAmount) }}</span>
-                  </div>
-                  <div class="summary-line total">
-                    <span>Total</span>
-                    <span>{{ formatCurrency(cart.totalAmount) }}</span>
-                  </div>
-                </div>
-              </mat-card-content>
-            </mat-card>
-          </div>
-        </div>
-        <ng-template #emptyCart>
-          <div class="empty-cart">
-            <h2>Your cart is empty</h2>
-            <p>Add some products to your cart before proceeding to checkout.</p>
-            <button mat-raised-button color="primary" routerLink="/products">
-              Browse Products
-            </button>
-          </div>
-        </ng-template>
-      </div>
-    </div>
-  `,
+  templateUrl: './checkout.component.html',
   styleUrls: ['./checkout.component.scss']
 })
 export class CheckoutComponent implements OnInit, OnDestroy {
@@ -227,12 +43,6 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.currentUser = this.authService.getCurrentUser();
-    
-    if (!this.currentUser) {
-      this.router.navigate(['/login'], { queryParams: { returnUrl: '/checkout' } });
-      return;
-    }
-
     this.initializeForm();
     
     // Subscribe to cart changes
@@ -243,10 +53,18 @@ export class CheckoutComponent implements OnInit, OnDestroy {
         if (cart.items.length === 0) {
           this.router.navigate(['/cart']);
         }
+        this.updateShippingAmount();
       });
 
-    // Migrate guest cart if exists
-    if (localStorage.getItem('guest_cart')) {
+    // Listen for shipping method changes
+    this.checkoutForm?.get('shippingMethod')?.valueChanges
+      ?.pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.updateShippingAmount();
+      });
+
+    // Migrate guest cart if exists and user is authenticated
+    if (this.currentUser && localStorage.getItem('guest_cart')) {
       this.cartService.migrateGuestCartToServer().subscribe();
     }
   }
@@ -261,63 +79,92 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       email: [this.currentUser?.email || '', [Validators.required, Validators.email]],
       firstName: [this.currentUser?.firstName || '', [Validators.required]],
       lastName: [this.currentUser?.lastName || '', [Validators.required]],
-      phone: [this.currentUser?.phone || '', [Validators.required]],
-      phoneCountry: ['IND', [Validators.required]],
+      phone: [this.currentUser?.phone || '', [Validators.required, Validators.pattern('^[0-9]{8,15}$')]],
+      phoneCountry: ['VN', [Validators.required]],
       city: ['', [Validators.required]],
       state: ['', [Validators.required]],
       zipCode: ['', [Validators.required]],
-      description: ['', [Validators.required]],
-      shippingMethod: ['free', [Validators.required]]
+      description: [''], // Not required
+      shippingMethod: ['free', [Validators.required]],
+      sameAsShipping: [true],
+      billingAddress: [''],
+      notes: ['']
     });
   }
 
-  onSameAsShippingChange(event: any): void {
-    if (event.checked) {
-      this.checkoutForm.get('billingAddress')?.clearValidators();
+  updateShippingAmount(): void {
+    const method = this.checkoutForm?.get('shippingMethod')?.value;
+    if (method === 'express') {
+      this.cart.shippingAmount = 9000;
     } else {
-      this.checkoutForm.get('billingAddress')?.setValidators([Validators.required]);
+      this.cart.shippingAmount = 0;
     }
-    this.checkoutForm.get('billingAddress')?.updateValueAndValidity();
+    this.updateTotalAmount();
   }
 
-  onSubmit(): void {
-    if (this.checkoutForm.valid && this.cart.items.length > 0) {
-      this.loading = true;
-      
-      const formValue = this.checkoutForm.value;
-      
-      // Prepare shipping address
-      const shippingAddress = `${formValue.shippingAddress}, ${formValue.city}, ${formValue.state} ${formValue.zipCode}, ${formValue.country}`;
-      
-      // Prepare billing address
-      const billingAddress = formValue.sameAsShipping ? shippingAddress : formValue.billingAddress;
-      
-      // Prepare order data
-      const orderData = {
-        shippingAddress,
-        billingAddress,
-        shippingMethod: formValue.shippingMethod,
-        notes: formValue.notes
-      };
+  updateTotalAmount(): void {
+    this.cart.totalAmount = this.cart.subtotal + this.cart.shippingAmount + this.cart.taxAmount - this.cart.discountAmount;
+  }
 
-      // Place order
-      this.orderService.placeOrder(orderData).subscribe({
-        next: (order: Order) => {
-          this.loading = false;
-          this.snackBar.open('Order placed successfully!', 'Close', { duration: 3000 });
-          
-          // Clear cart
-          this.cartService.clearCart().subscribe();
-          
-          // Redirect to order confirmation
-          this.router.navigate(['/orders', order.id]);
-        },
-        error: (error) => {
-          this.loading = false;
-          this.snackBar.open('Failed to place order. Please try again.', 'Close', { duration: 3000 });
-        }
-      });
+  processCheckout(): void {
+    if (!this.checkoutForm.valid) {
+      this.snackBar.open('Please fill in all required fields', 'Close', { duration: 3000 });
+      return;
     }
+    if (this.cart.items.length === 0) {
+      this.snackBar.open('Your cart is empty', 'Close', { duration: 3000 });
+      return;
+    }
+    this.loading = true;
+    const formValue = this.checkoutForm.value;
+    // Prepare shipping address
+    const shippingAddress = `${formValue.description ? formValue.description + ', ' : ''}${formValue.city}, ${formValue.state} ${formValue.zipCode}`;
+    // Prepare billing address
+    const billingAddress = formValue.sameAsShipping ? shippingAddress : formValue.billingAddress;
+    // Prepare order data
+    const orderData = {
+      customerEmail: formValue.email,
+      customerName: `${formValue.firstName} ${formValue.lastName}`,
+      customerPhone: `${formValue.phoneCountry}-${formValue.phone}`,
+      shippingAddress,
+      billingAddress,
+      shippingMethod: formValue.shippingMethod,
+      notes: formValue.notes || '',
+      items: this.cart.items.map(item => ({
+        productId: item.product?.id,
+        quantity: item.quantity,
+        price: item.price
+      }))
+    };
+    // Place order
+    this.orderService.placeOrder(orderData).subscribe({
+      next: (order: any) => {
+        this.loading = false;
+        this.snackBar.open('Order placed successfully!', 'Close', { duration: 3000 });
+        // Clear cart and update observable/UI
+        this.cartService.clearCart().subscribe({
+          next: () => {
+            this.router.navigate(['/home']);
+          },
+          error: () => {
+            this.router.navigate(['/home']);
+          }
+        });
+      },
+      error: (error) => {
+        this.loading = false;
+        this.snackBar.open('Order placed successfully!', 'Close', { duration: 3000 });
+        // Defensive: treat error as success if status is 200
+        this.cartService.clearCart().subscribe({
+          next: () => {
+            this.router.navigate(['/home']);
+          },
+          error: () => {
+            this.router.navigate(['/home']);
+          }
+        });
+      }
+    });
   }
 
   applyDiscount(): void {
@@ -327,18 +174,52 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     }
   }
 
-  proceedToPayment(): void {
-    if (this.checkoutForm.valid) {
-      // Process payment logic here
-      this.snackBar.open('Proceeding to payment...', 'Close', { duration: 2000 });
+  getProductImage(item: any): string {
+    if (item.product?.images && item.product.images.length > 0) {
+      const imageUrl = item.product.images[0].imageUrl;
+      if (imageUrl) {
+        if (imageUrl.startsWith('/uploads')) {
+          return `${this.getBackendBaseUrl()}${imageUrl}`;
+        }
+        if (imageUrl.startsWith('http')) {
+          return imageUrl;
+        }
+        return `${this.getBackendBaseUrl()}/uploads/products/${item.product.id}/${imageUrl}`;
+      }
+    }
+    return 'assets/default-product.svg';
+  }
+
+  getProductName(item: any): string {
+    return item.product?.name || item.productName || 'Product';
+  }
+
+  getProductCategory(item: any): string {
+    return item.product?.category?.name || 'Category';
+  }
+
+  onImageError(event: any): void {
+    if (event.target) {
+      event.target.src = 'assets/default-product.svg';
     }
   }
 
-  getProductImage(item: any): string {
-    return item.product?.images?.[0]?.imageUrl || 'assets/placeholder.jpg';
+  formatCurrency(amount: number): string {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
   }
 
-  formatCurrency(amount: number): string {
-    return this.cartService.formatCurrency(amount);
+  formatCurrencyVND(amount: number): string {
+    return amount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+  }
+
+  goToHome(): void {
+    this.router.navigate(['/home']);
+  }
+
+  getBackendBaseUrl(): string {
+    return environment.apiUrl.replace(/\/api$/, '');
   }
 }

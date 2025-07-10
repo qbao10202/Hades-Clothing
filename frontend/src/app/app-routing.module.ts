@@ -37,8 +37,8 @@ const routes: Routes = [
   
   // Protected routes
   
-  // Product routes
-  { path: 'products', component: ProductListComponent, canActivate: [AuthGuard] },
+  // Product routes (public access for browsing)
+  { path: 'products', component: ProductListComponent }, // Public access for product browsing
   
   // Cart and checkout routes
   { path: 'cart', component: CartComponent, canActivate: [AuthGuard] },

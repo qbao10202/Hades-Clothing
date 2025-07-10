@@ -23,10 +23,12 @@ public class ProductDTO {
     private String size;
     private String material;
     private String tags;
-    private boolean isActive;
+    private String sku;
+    private Boolean isActive;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<ProductImageDTO> images;
+    private CategoryDTO category;
 
     // Getters and setters
     public Long getId() { return id; }
@@ -65,31 +67,16 @@ public class ProductDTO {
     public void setMaterial(String material) { this.material = material; }
     public String getTags() { return tags; }
     public void setTags(String tags) { this.tags = tags; }
-    public boolean isActive() { return isActive; }
-    public void setActive(boolean active) { isActive = active; }
+    public String getSku() { return sku; }
+    public void setSku(String sku) { this.sku = sku; }
+    public Boolean getIsActive() { return isActive; }
+    public void setIsActive(Boolean isActive) { this.isActive = isActive; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
     public List<ProductImageDTO> getImages() { return images; }
     public void setImages(List<ProductImageDTO> images) { this.images = images; }
-
-    public static class ProductImageDTO {
-        private Long id;
-        private String imageUrl;
-        private String altText;
-        private int sortOrder;
-        private boolean isPrimary;
-        // Getters and setters
-        public Long getId() { return id; }
-        public void setId(Long id) { this.id = id; }
-        public String getImageUrl() { return imageUrl; }
-        public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
-        public String getAltText() { return altText; }
-        public void setAltText(String altText) { this.altText = altText; }
-        public int getSortOrder() { return sortOrder; }
-        public void setSortOrder(int sortOrder) { this.sortOrder = sortOrder; }
-        public boolean isPrimary() { return isPrimary; }
-        public void setPrimary(boolean primary) { isPrimary = primary; }
-    }
+    public CategoryDTO getCategory() { return category; }
+    public void setCategory(CategoryDTO category) { this.category = category; }
 } 

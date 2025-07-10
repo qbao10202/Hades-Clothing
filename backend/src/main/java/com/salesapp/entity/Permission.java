@@ -30,15 +30,18 @@ public class Permission {
     
     @Size(max = 50)
     private String action; // e.g., "read", "write", "delete"
-    
+
     @CreatedDate
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
     
     // Constructors
-    public Permission() {}
+    public Permission() {
+        this.createdAt = LocalDateTime.now();
+    }
     
     public Permission(String name, String description, String resource, String action) {
+        this();
         this.name = name;
         this.description = description;
         this.resource = resource;

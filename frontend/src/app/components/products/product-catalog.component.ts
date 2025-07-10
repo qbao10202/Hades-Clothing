@@ -9,6 +9,7 @@ import { ProductService } from '../../services/product.service';
 import { CartService } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
 import { AddToCartModalComponent } from '../shared/add-to-cart-modal.component';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-product-catalog',
@@ -17,6 +18,16 @@ import { AddToCartModalComponent } from '../shared/add-to-cart-modal.component';
       <!-- Header with Categories, Price Filter, and Search -->
       <div class="catalog-header">
         <div class="container">
+          <div class="header-content">
+            <div class="brand-logo">
+              <h1>HADES</h1>
+            </div>
+            <div class="header-actions">
+              <button mat-icon-button (click)="goToCart()" class="cart-btn">
+                <mat-icon [matBadge]="cartItemCount" matBadgeColor="warn" [matBadgeHidden]="cartItemCount === 0">shopping_cart</mat-icon>
+              </button>
+            </div>
+          </div>
           <!-- Categories Navigation -->
           <div class="categories-nav">
             <button 
@@ -55,12 +66,16 @@ import { AddToCartModalComponent } from '../shared/add-to-cart-modal.component';
             </div>
             
             <!-- Search Bar -->
-            <div class="search-bar">
+            <div class="search-bar" style="display: flex; align-items: center; gap: 8px;">
               <mat-form-field appearance="outline" class="search-input">
                 <mat-label>Search products...</mat-label>
                 <input matInput [formControl]="searchControl" placeholder="Search by name, description...">
                 <mat-icon matSuffix>search</mat-icon>
               </mat-form-field>
+              <button mat-raised-button color="primary" (click)="searchButtonClicked()" class="modern-search-btn">
+                <mat-icon>search</mat-icon>
+                Search
+              </button>
             </div>
           </div>
         </div>
@@ -143,6 +158,41 @@ import { AddToCartModalComponent } from '../shared/add-to-cart-modal.component';
       z-index: 100;
     }
     
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .brand-logo h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #333;
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+    }
+
+    .cart-btn {
+      background: #007bff;
+      color: white;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .cart-btn:hover {
+      background: #0056b3;
+    }
+    
     .categories-nav {
       display: flex;
       gap: 8px;
@@ -218,6 +268,24 @@ import { AddToCartModalComponent } from '../shared/add-to-cart-modal.component';
     
     .search-input {
       width: 100%;
+    }
+
+    .modern-search-btn {
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: #007bff;
+      color: white;
+      border: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .modern-search-btn:hover {
+      background: #0056b3;
+      transform: translateY(-2px);
     }
     
     .products-section {
@@ -430,6 +498,9 @@ export class ProductCatalogComponent implements OnInit, OnDestroy {
     { value: 'price-high-low', label: 'Price: High to Low' }
   ];
   
+  cartItemCount = 0;
+  currentUser: any = null;
+  
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -442,6 +513,10 @@ export class ProductCatalogComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.currentUser = this.authService.getCurrentUser();
+    this.cartService.cartItems$.subscribe(items => {
+      this.cartItemCount = items.reduce((total, item) => total + item.quantity, 0);
+    });
     this.loadCategories();
     this.loadProducts();
     this.setupFilters();
@@ -556,11 +631,15 @@ export class ProductCatalogComponent implements OnInit, OnDestroy {
     if (product.images && product.images.length > 0) {
       const imageUrl = product.images[0].imageUrl;
       if (imageUrl && imageUrl.startsWith('/uploads/')) {
-        return 'http://localhost:8080' + imageUrl;
+        return this.getBackendBaseUrl() + imageUrl;
       }
       return imageUrl;
     }
     return 'assets/placeholder.jpg';
+  }
+
+  getBackendBaseUrl(): string {
+    return environment.apiUrl.replace(/\/api$/, '');
   }
 
   isProductAvailable(product: ProductDTO): boolean {
@@ -593,6 +672,15 @@ export class ProductCatalogComponent implements OnInit, OnDestroy {
     this.searchControl.setValue('');
     this.sortControl.setValue('default');
     this.router.navigate([], { queryParams: {}, replaceUrl: true });
+    this.applyFilters();
+  }
+
+  goToCart(): void {
+    this.router.navigate(['/cart']);
+  }
+
+  searchButtonClicked(): void {
+    // Triggers the same logic as typing in the search bar
     this.applyFilters();
   }
 }

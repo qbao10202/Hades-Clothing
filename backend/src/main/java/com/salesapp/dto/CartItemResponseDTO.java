@@ -13,13 +13,14 @@ public class CartItemResponseDTO {
     private LocalDateTime updatedAt;
     private String productName;
     private String productSku;
+    private ProductDTO product; // Include full product information
 
     // Constructors
     public CartItemResponseDTO() {}
 
     public CartItemResponseDTO(Long id, Long userId, Long productId, Integer quantity, 
                               BigDecimal price, LocalDateTime createdAt, LocalDateTime updatedAt, 
-                              String productName, String productSku) {
+                              String productName, String productSku, ProductDTO product) {
         this.id = id;
         this.userId = userId;
         this.productId = productId;
@@ -29,6 +30,7 @@ public class CartItemResponseDTO {
         this.updatedAt = updatedAt;
         this.productName = productName;
         this.productSku = productSku;
+        this.product = product;
     }
 
     // Getters and Setters
@@ -102,5 +104,13 @@ public class CartItemResponseDTO {
 
     public void setProductSku(String productSku) {
         this.productSku = productSku;
+    }
+
+    public ProductDTO getProduct() {
+        return product;
+    }
+
+    public void setProduct(ProductDTO product) {
+        this.product = product;
     }
 }

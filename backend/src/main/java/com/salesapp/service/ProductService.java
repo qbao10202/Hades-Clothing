@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.cache.annotation.Cacheable;
 import com.salesapp.dto.ProductDTO;
+import com.salesapp.dto.ProductImageDTO;
 import java.util.stream.Collectors;
 
 import java.util.List;
@@ -110,17 +111,15 @@ public class ProductService {
         dto.setSize(product.getSize());
         dto.setMaterial(product.getMaterial());
         dto.setTags(product.getTags());
-        dto.setActive(product.isActive());
+        dto.setIsActive(product.isActive());
         dto.setCreatedAt(product.getCreatedAt());
         dto.setUpdatedAt(product.getUpdatedAt());
         if (product.getImages() != null) {
             dto.setImages(product.getImages().stream().map(img -> {
-                ProductDTO.ProductImageDTO imgDto = new ProductDTO.ProductImageDTO();
+                ProductImageDTO imgDto = new ProductImageDTO();
                 imgDto.setId(img.getId());
                 imgDto.setImageUrl(img.getImageUrl());
-                imgDto.setAltText(img.getAltText());
-                imgDto.setSortOrder(img.getSortOrder());
-                imgDto.setPrimary(img.isPrimary());
+                imgDto.setIsPrimary(img.isPrimary());
                 return imgDto;
             }).collect(Collectors.toList()));
         }

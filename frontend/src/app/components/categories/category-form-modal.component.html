@@ -7,9 +7,9 @@
       <mat-icon>chevron_right</mat-icon>
       <span class="breadcrumb-item">Categories</span>
       <mat-icon>chevron_right</mat-icon>
-      <span class="breadcrumb-item active">Edit</span>
+      <span class="breadcrumb-item active">{{ breadcrumbLabel }}</span>
     </div>
-    <h2 class="modal-title">Edit Category</h2>
+    <h2 class="modal-title">{{ modalTitle }}</h2>
     <button class="close-button" mat-icon-button (click)="onCancel()">
       <mat-icon>close</mat-icon>
     </button>
@@ -209,7 +209,7 @@
         </div>
 
         <!-- Image Upload -->
-        <div class="form-group">
+        <!-- <div class="form-group">
           <label for="image">Category Image</label>
           <input 
             id="image"
@@ -219,6 +219,12 @@
             accept="image/*"
             (change)="onImageChange($event)"
           />
+        </div> -->
+
+        <!-- Form Actions -->
+        <div class="form-actions-row">
+          <button type="submit" class="save-btn" [disabled]="categoryForm.invalid">{{ isEdit ? 'Save' : 'Create Category' }}</button>
+          <button type="button" class="cancel-btn" (click)="onCancel()">Cancel</button>
         </div>
       </div>
     </form>

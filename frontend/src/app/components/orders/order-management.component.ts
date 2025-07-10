@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
@@ -6,46 +6,95 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { FormControl } from '@angular/forms';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { animate, state, style, transition, trigger } from '@angular/animations';
+import { MatSelectChange } from '@angular/material/select';
 
-import { Order } from '../../models';
 import { OrderService } from '../../services/order.service';
 import { AuthService } from '../../services/auth.service';
+import { Order, OrderStatus, Customer, User, Product, OrderItem } from '../../models';
+
+interface Category {
+  id: number;
+  name: string;
+  description: string;
+  imageUrl: string;
+  isActive: boolean;
+}
 
 @Component({
   selector: 'app-order-management',
   templateUrl: './order-management.component.html',
-  styleUrls: ['./order-management.component.scss']
+  styleUrls: ['./order-management.component.scss'],
+  animations: [
+    trigger('detailExpand', [
+      state('collapsed', style({ height: '0px', minHeight: '0' })),
+      state('expanded', style({ height: '*' })),
+      transition('expanded <=> collapsed', animate('225ms cubic-bezier(0.4, 0.0, 0.2, 1)')),
+    ]),
+  ],
 })
-export class OrderManagementComponent implements OnInit {
-  displayedColumns: string[] = ['productName', 'customerName', 'orderId', 'amount', 'status', 'actions'];
-  dataSource = new MatTableDataSource<Order>();
-  searchControl = new FormControl();
-  
-  // Statistics
-  stats = {
-    totalOrders: 2401200,
-    newOrders: 1701900,
-    completedOrders: 1405300,
-    cancelledOrders: 99349
-  };
-  
-  // Filters
+export class OrderManagementComponent implements OnInit, AfterViewInit {
+  displayedColumns: string[] = ['orderId', 'created', 'customerName', 'total', 'status', 'edit', 'actions'];
+  dataSource = new MatTableDataSource<Order>([]);
+  expandedOrder: Order | null = null;
+
+  searchControl = new FormControl('');
   filters = {
-    status: '',
-    paymentStatus: '',
-    shippingStatus: '',
     fromDate: null as Date | null,
     toDate: null as Date | null,
-    search: ''
+    status: ''
+  };
+
+  stats = {
+    totalOrders: 0,
+    newOrders: 0,
+    completedOrders: 0,
+    cancelledOrders: 0
   };
 
   // Pagination
+  totalItems = 0;
   pageSize = 10;
   currentPage = 0;
-  totalOrders = 0;
-  
+  pageSizeOptions = [5, 10, 25, 50];
+
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
+
+  // Add available status options
+  statusOptions = [
+    { value: 'CART' as OrderStatus, label: 'Cart' },
+    { value: 'PENDING' as OrderStatus, label: 'Pending' },
+    { value: 'CONFIRMED' as OrderStatus, label: 'Confirmed' },
+    { value: 'PROCESSING' as OrderStatus, label: 'Processing' },
+    { value: 'SHIPPED' as OrderStatus, label: 'Shipped' },
+    { value: 'DELIVERED' as OrderStatus, label: 'Delivered' },
+    { value: 'CANCELLED' as OrderStatus, label: 'Cancelled' },
+    { value: 'REFUNDED' as OrderStatus, label: 'Refunded' }
+  ];
+
+  // Get allowed status transitions based on current status
+  getAllowedStatusOptions(currentStatus: OrderStatus) {
+    const allowedTransitions: { [key in OrderStatus]: OrderStatus[] } = {
+      'CART': ['PENDING'],
+      'PENDING': ['CONFIRMED', 'CANCELLED'],
+      'CONFIRMED': ['PROCESSING', 'CANCELLED'],
+      'PROCESSING': ['SHIPPED', 'CANCELLED'],
+      'SHIPPED': ['DELIVERED', 'CANCELLED'],
+      'DELIVERED': ['REFUNDED'],
+      'CANCELLED': [],
+      'REFUNDED': []
+    };
+
+    const allowedStatuses = allowedTransitions[currentStatus] || [];
+    
+    // Include current status to show it in the dropdown
+    if (!allowedStatuses.includes(currentStatus)) {
+      allowedStatuses.unshift(currentStatus);
+    }
+
+    return this.statusOptions.filter(option => allowedStatuses.includes(option.value));
+  }
 
   constructor(
     private orderService: OrderService,
@@ -56,84 +105,195 @@ export class OrderManagementComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadOrders();
-    this.setupSearch();
+    this.loadStats();
+
+    // Setup search with debounce
+    this.searchControl.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged()
+      )
+      .subscribe(() => {
+        this.currentPage = 0;
+        this.loadOrders();
+      });
   }
 
-  setupSearch(): void {
-    this.searchControl.valueChanges
-      .pipe(debounceTime(300), distinctUntilChanged())
-      .subscribe(value => {
-        this.filters.search = value;
-        this.applyFilters();
+  ngAfterViewInit() {
+    if (this.sort) {
+      this.sort.sortChange.subscribe(() => {
+        this.currentPage = 0;
+        this.loadOrders();
       });
+    }
   }
 
   loadOrders(): void {
-    this.orderService.getOrders()
-      .subscribe({
-        next: (orders: any[]) => {
-          this.dataSource.data = orders;
-          this.totalOrders = orders.length;
-          this.updateStats();
-        },
-        error: (error: any) => {
-          console.error('Error loading orders:', error);
+    const params = {
+      page: this.currentPage,
+      size: this.pageSize,
+      sortBy: this.sort?.active || 'orderDate',
+      sortDir: this.sort?.direction || 'desc',
+      status: this.filters.status || undefined,
+      startDate: this.filters.fromDate ? this.formatDate(this.filters.fromDate) : undefined,
+      endDate: this.filters.toDate ? this.formatDate(this.filters.toDate) : undefined,
+      search: this.searchControl.value || undefined
+    };
+
+    console.log('Loading orders with params:', params);
+
+    this.orderService.getAllOrders(params).subscribe({
+      next: (response) => {
+        console.log('Raw orders response:', response);
+        
+        if (!response) {
+          console.error('Response is null or undefined');
+          this.handleError('No response from server');
+          return;
         }
-      });
+
+        let orders: Order[] = [];
+        
+        if (Array.isArray(response)) {
+          console.log('Response is an array');
+          orders = response;
+        } else if (response.content && Array.isArray(response.content)) {
+          console.log('Response is paginated');
+          orders = response.content;
+          this.totalItems = response.totalElements || orders.length;
+        } else {
+          console.error('Unexpected response format:', response);
+          this.handleError('Invalid response format');
+          return;
+        }
+
+        // Filter out CART status orders and orders with orderNumber starting with CART
+        const filteredOrders = orders.filter(order => {
+          if (!order.orderNumber) {
+            console.log('Order missing orderNumber:', order);
+            return false;
+          }
+          const isValid = order.status !== ('CART' as OrderStatus) && !order.orderNumber.startsWith('CART');
+          if (!isValid) {
+            console.log('Filtered out order:', order);
+          }
+          return isValid;
+        });
+
+        console.log('Filtered orders:', filteredOrders);
+
+        if (filteredOrders.length === 0) {
+          console.log('No orders after filtering');
+        }
+
+        this.dataSource.data = filteredOrders;
+        
+        // Update stats based on filtered orders
+        this.stats = {
+          totalOrders: filteredOrders.length,
+          newOrders: filteredOrders.filter(o => o.status === 'PENDING').length,
+          completedOrders: filteredOrders.filter(o => o.status === 'DELIVERED').length,
+          cancelledOrders: filteredOrders.filter(o => o.status === 'CANCELLED').length
+        };
+
+        console.log('Updated stats:', this.stats);
+      },
+      error: (error) => {
+        console.error('Error loading orders:', error);
+        this.handleError(error);
+      }
+    });
   }
 
-  updateStats(): void {
-    // Update statistics based on loaded orders
-    // This is a simplified version - in real app, you'd get these from a dedicated API
-    this.stats = {
-      totalOrders: this.totalOrders,
-      newOrders: this.dataSource.data.filter(o => o.status === 'PENDING').length,
-      completedOrders: this.dataSource.data.filter(o => o.status === 'DELIVERED').length,
-      cancelledOrders: this.dataSource.data.filter(o => o.status === 'CANCELLED').length
-    };
+  private formatDate(date: Date): string {
+    if (!date) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  loadStats(): void {
+    this.orderService.getOrderStatistics(this.filters.fromDate, this.filters.toDate).subscribe({
+      next: (stats) => {
+        this.stats = {
+          totalOrders: stats.totalOrders || 0,
+          newOrders: stats.newOrders || 0,
+          completedOrders: stats.completedOrders || 0,
+          cancelledOrders: stats.cancelledOrders || 0
+        };
+      },
+      error: (error) => {
+        console.error('Error loading statistics:', error);
+      }
+    });
+  }
+
+  onPageChange(event: PageEvent): void {
+    this.currentPage = event.pageIndex;
+    this.pageSize = event.pageSize;
+    this.loadOrders();
+  }
+
+  onSortChange(): void {
+    this.currentPage = 0;
+    this.loadOrders();
   }
 
   applyFilters(): void {
     this.currentPage = 0;
     this.loadOrders();
+    this.loadStats();
   }
 
   clearFilters(): void {
     this.filters = {
-      status: '',
-      paymentStatus: '',
-      shippingStatus: '',
       fromDate: null,
       toDate: null,
-      search: ''
+      status: ''
     };
     this.searchControl.setValue('');
-    this.applyFilters();
+    this.currentPage = 0;
+    this.loadOrders();
+    this.loadStats();
   }
 
-  // Helper methods for template
-  getOrderProductName(order: Order): string {
-    return order.orderItems?.[0]?.productName || 'N/A';
-  }
-
-  getOrderProductCategory(order: Order): string {
-    return order.orderItems?.[0]?.product?.category?.name || 'N/A';
-  }
-
-  getOrderProductImage(order: Order): string {
-    const product = order.orderItems?.[0]?.product;
-    if (product?.images && product.images.length > 0) {
-      return product.images[0].imageUrl;
+  getStatusClass(status: OrderStatus): string {
+    switch (status) {
+      case 'PENDING': return 'status-pending';
+      case 'CONFIRMED': return 'status-confirmed';
+      case 'PROCESSING': return 'status-processing';
+      case 'SHIPPED': return 'status-shipped';
+      case 'DELIVERED': return 'status-delivered';
+      case 'CANCELLED': return 'status-cancelled';
+      case 'REFUNDED': return 'status-refunded';
+      default: return 'status-unknown';
     }
-    return 'assets/default-product.png';
+  }
+
+  getDiscount(item: any): number {
+    if (item.discountAmount && item.unitPrice) {
+      return Math.round((item.discountAmount / (item.unitPrice * item.quantity)) * 100);
+    }
+    return 0;
+  }
+
+  updateOrderStatus(order: Order): void {
+    // TODO: Implement status update dialog
+    console.log('Update status for order:', order);
+  }
+
+  printOrder(order: Order): void {
+    // TODO: Implement print functionality
+    console.log('Print order:', order);
   }
 
   getCustomerName(order: Order): string {
-    return order.customer?.contactPerson || order.user?.firstName + ' ' + order.user?.lastName || 'N/A';
+    return order.customer?.contactPerson || 'N/A';
   }
 
   getCustomerType(order: Order): string {
-    return order.customer?.customerType || 'Pro Customer';
+    return order.customer?.customerType || 'N/A';
   }
 
   getCustomerAvatar(order: Order): string {
@@ -144,38 +304,66 @@ export class OrderManagementComponent implements OnInit {
     return order.paymentStatus || 'Unknown';
   }
 
-  getStatusClass(status: string): string {
-    switch (status?.toLowerCase()) {
-      case 'pending': return 'status-pending';
-      case 'confirmed': return 'status-confirmed';
-      case 'processing': return 'status-processing';
-      case 'shipped': return 'status-shipped';
-      case 'delivered': return 'status-accepted';
-      case 'cancelled': return 'status-rejected';
-      case 'refunded': return 'status-rejected';
-      default: return 'status-pending';
+  onStatusChange(event: MatSelectChange, order: Order): void {
+    const newStatus = event.value as OrderStatus;
+    
+    // Check if the transition is allowed before making the API call
+    const allowedStatuses = this.getAllowedStatusOptions(order.status).map(option => option.value);
+    if (!allowedStatuses.includes(newStatus)) {
+      this.snackBar.open('Invalid status transition', 'Close', { duration: 3000 });
+      event.source.value = order.status; // Revert the selection
+      return;
     }
+
+    console.log(`Updating order ${order.id} status from ${order.status} to ${newStatus}`);
+
+    this.orderService.updateOrderStatus(order.id, newStatus).subscribe({
+      next: (updatedOrder) => {
+        const index = this.dataSource.data.findIndex(o => o.id === order.id);
+        if (index !== -1) {
+          this.dataSource.data[index] = updatedOrder;
+          this.dataSource._updateChangeSubscription(); // Force refresh
+          this.snackBar.open(`Order status updated to ${newStatus}`, 'Close', { 
+            duration: 3000,
+            panelClass: ['success-snackbar']
+          });
+        }
+      },
+      error: (error) => {
+        console.error('Error updating order status:', error);
+        
+        // Extract error message from backend response
+        let errorMessage = 'Failed to update order status';
+        if (error.error?.error) {
+          errorMessage = error.error.error;
+        } else if (error.error?.message) {
+          errorMessage = error.error.message;
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        this.snackBar.open(errorMessage, 'Close', { 
+          duration: 5000,
+          panelClass: ['error-snackbar']
+        });
+        
+        // Revert the selection
+        event.source.value = order.status;
+      }
+    });
   }
 
-  // Action methods
-  addOrder(): void {
-    // Implementation for adding new order
-    this.snackBar.open('Add order functionality to be implemented', 'Close', { duration: 3000 });
-  }
-
-  updateOrderStatus(order: Order): void {
-    // Implementation for updating order status
-    this.snackBar.open('Update order status functionality to be implemented', 'Close', { duration: 3000 });
-  }
-
-  printOrder(order: Order): void {
-    // Implementation for printing order
-    this.snackBar.open('Print order functionality to be implemented', 'Close', { duration: 3000 });
-  }
-
-  onPageChange(event: PageEvent): void {
-    this.currentPage = event.pageIndex;
-    this.pageSize = event.pageSize;
-    this.loadOrders();
+  private handleError(error: any): void {
+    const message = error.error?.message || error.message || 'An error occurred';
+    console.error('Error:', message);
+    this.snackBar.open(message, 'Close', { duration: 3000 });
+    this.dataSource.data = [];
+    this.totalItems = 0;
+    this.stats = {
+      totalOrders: 0,
+      newOrders: 0,
+      completedOrders: 0,
+      cancelledOrders: 0
+    };
   }
 }

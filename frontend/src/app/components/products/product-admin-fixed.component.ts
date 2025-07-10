@@ -8,6 +8,7 @@ import { ProductDTO, Category } from '../../models';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ProductFormModalComponent } from './product-form-modal.component';
 import { DeleteConfirmationComponent } from '../shared/delete-confirmation.component';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-product-admin',
@@ -152,8 +153,8 @@ export class ProductAdminComponent implements OnInit {
     const dialogRef = this.dialog.open(DeleteConfirmationComponent, {
       width: '400px',
       data: {
-        title: 'Xác nhận xóa sản phẩm',
-        message: 'Bạn có chắc chắn muốn xóa sản phẩm này?',
+        title: 'Delete product',
+        message: 'Are you sure you want to delete this product?',
         itemName: product.name
       }
     });
@@ -266,16 +267,20 @@ export class ProductAdminComponent implements OnInit {
       
       // If imageUrl starts with /uploads, prefix with backend host
       if (imageUrl.startsWith('/uploads')) {
-        return `http://localhost:8080${imageUrl}`;
+        return `${this.getBackendBaseUrl()}${imageUrl}`;
       }
       
       // Otherwise, construct the full URL
-      return `http://localhost:8080/api/uploads/products/${product.id}/${imageUrl}`;
+      return `${this.getBackendBaseUrl()}/api/uploads/products/${product.id}/${imageUrl}`;
     }
     return 'assets/default-product.svg';
   }
 
   onImageError(event: any): void {
     event.target.src = 'assets/default-product.svg';
+  }
+
+  getBackendBaseUrl(): string {
+    return environment.apiUrl.replace(/\/api$/, '');
   }
 }

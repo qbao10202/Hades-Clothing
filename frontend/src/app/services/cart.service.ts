@@ -95,6 +95,7 @@ export class CartService {
         tap(cart => {
           this.cartSubject.next(cart);
           this.showSuccessMessage('Cart updated successfully');
+          this.loadCart(); // Ensure cart is reloaded from backend
         }),
         catchError(error => {
           this.showErrorMessage('Failed to update cart');
@@ -123,6 +124,7 @@ export class CartService {
         tap(cart => {
           this.cartSubject.next(cart);
           this.showSuccessMessage('Item removed from cart');
+          this.loadCart(); // Ensure cart is reloaded from backend
         }),
         catchError(error => {
           this.showErrorMessage('Failed to remove item from cart');

@@ -42,6 +42,8 @@ public class Order {
     @JoinColumn(name = "user_id")
     private User user;
     
+    @CreatedDate
+    @Column(name = "order_date")
     private LocalDateTime orderDate;
     
     @Enumerated(EnumType.STRING)

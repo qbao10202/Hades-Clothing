@@ -9,6 +9,7 @@ import { Category, User, Cart } from '../../models';
 import { ProductService } from '../../services/product.service';
 import { CartService } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
+import { environment } from '../../../environments/environment';
 
 interface CategoryCard extends Category {
   productCount: number;
@@ -134,12 +135,12 @@ export class HomeComponent implements OnInit, OnDestroy {
   getCategoryImageUrl(category: Category): string {
     if (category.imageUrl) {
       if (category.imageUrl.startsWith('/uploads')) {
-        return `http://localhost:8080${category.imageUrl}`;
+        return `${this.getBackendBaseUrl()}${category.imageUrl}`;
       }
       if (category.imageUrl.startsWith('http')) {
         return category.imageUrl;
       }
-      return `http://localhost:8080/uploads/categories/${category.id}/${category.imageUrl}`;
+      return `${this.getBackendBaseUrl()}/uploads/categories/${category.id}/${category.imageUrl}`;
     }
     return 'assets/default-product.svg';
   }
@@ -174,5 +175,9 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   goToAdmin(): void {
     this.router.navigate(['/admin/products']);
+  }
+
+  getBackendBaseUrl(): string {
+    return environment.apiUrl.replace(/\/api$/, '');
   }
 }

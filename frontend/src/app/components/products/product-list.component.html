@@ -2,6 +2,8 @@
   <!-- Categories Navigation -->
   <div class="categories-header">
     <div class="container">
+
+  
       <div class="categories-nav">
         <button 
           class="home-btn"
@@ -27,29 +29,18 @@
       </div>
       
       <!-- Filters Section -->
-      <div class="filters-section">
         <!-- Search Bar -->
-        <div class="search-bar">
-          <mat-form-field appearance="outline" class="search-input">
-            <mat-label>Search products...</mat-label>
-            <input matInput placeholder="Search by name, description..." [(ngModel)]="searchQuery" (input)="onSearchChange()">
-            <mat-icon matSuffix class="search-icon">search</mat-icon>
-          </mat-form-field>
-        </div>
+        <form class="search-bar" (submit)="onSearchChange(); $event.preventDefault();" autocomplete="off">
+          <label for="searchInput" class="visually-hidden">Search products</label>
+          <input id="searchInput" type="text" class="search-input" placeholder="Search by name, description..." [(ngModel)]="searchQuery" name="searchQuery">
+          <button type="submit" class="search-btn" aria-label="Search">
+            <!-- Simple SVG search icon -->
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#007bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          </button>
+        </form>
         
-        <!-- Sort Dropdown -->
-        <div class="sort-filter">
-          <mat-form-field appearance="outline" class="sort-select">
-            <mat-label>Sort by</mat-label>
-            <mat-select [(value)]="sortBy" (selectionChange)="onSortChange()">
-              <mat-option value="name">Name</mat-option>
-              <mat-option value="price-low">Price: Low to High</mat-option>
-              <mat-option value="price-high">Price: High to Low</mat-option>
-              <mat-option value="newest">Newest</mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-      </div>
+
+   
     </div>
   </div>
 

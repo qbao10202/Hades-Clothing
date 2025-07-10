@@ -3,6 +3,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Product, ProductDTO } from '../../models';
 import { CartService } from '../../services/cart.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { environment } from '../../../environments/environment';
 
 export interface AddToCartDialogData {
   product: Product | ProductDTO;
@@ -323,11 +324,16 @@ export class AddToCartModalComponent implements OnInit {
     if (this.product.images && this.product.images.length > 0) {
       const imageUrl = this.product.images[0].imageUrl;
       if (imageUrl && imageUrl.startsWith('/uploads/')) {
-        return 'http://localhost:8080' + imageUrl;
+        return this.getBackendBaseUrl() + imageUrl;
       }
       return imageUrl;
     }
     return 'assets/placeholder.jpg';
+  }
+
+  getBackendBaseUrl(): string {
+    // Remove trailing /api if present
+    return environment.apiUrl.replace(/\/api$/, '');
   }
 
   getProductPrice(): number {

@@ -2,6 +2,9 @@ package com.salesapp.controller;
 
 import com.salesapp.dto.CartResponseDTO;
 import com.salesapp.dto.CartItemResponseDTO;
+import com.salesapp.dto.ProductDTO;
+import com.salesapp.dto.CategoryDTO;
+import com.salesapp.dto.ProductImageDTO;
 import com.salesapp.entity.Order;
 import com.salesapp.entity.OrderItem;
 import com.salesapp.entity.Product;
@@ -227,53 +230,81 @@ public class CartController {
     // POST /api/cart/checkout
     @PostMapping("/checkout")
     public ResponseEntity<Order> checkout(@RequestBody CheckoutDTO checkoutDto, Authentication authentication) {
-        String username = authentication.getName();
-        User user = userRepository.findByUsername(username).orElseThrow();
-        Order cart = getOrCreateCart(user);
-        
-        if (cart.getOrderItems().isEmpty()) {
-            throw new RuntimeException("Cart is empty");
+        try {
+            String username = authentication.getName();
+            User user = userRepository.findByUsername(username).orElseThrow();
+            
+            // Create or update customer information
+            Customer customer = customerRepository.findByUserId(user.getId()).orElseGet(() -> {
+                Customer newCustomer = new Customer();
+                newCustomer.setUserId(user.getId());
+                newCustomer.setCustomerCode("CUST-" + user.getId());
+                newCustomer.setActive(true);
+                return newCustomer;
+            });
+            
+            // Update customer information from checkout data
+            customer.setEmail(checkoutDto.customerEmail);
+            customer.setContactPerson(checkoutDto.customerName);
+            customer.setPhone(checkoutDto.customerPhone);
+            customer.setCustomerType(Customer.CustomerType.INDIVIDUAL);
+            customer.setCountry("Vietnam");
+            customer = customerRepository.save(customer);
+            
+            // Create new order
+            Order order = new Order();
+            order.setUser(user);
+            order.setCustomer(customer);
+            order.setStatus(Order.OrderStatus.PENDING);
+            order.setOrderNumber("ORDER-" + System.currentTimeMillis());
+            order.setOrderDate(java.time.LocalDateTime.now());
+            order.setShippingAddress(checkoutDto.shippingAddress);
+            order.setBillingAddress(checkoutDto.billingAddress);
+            order.setShippingMethod(checkoutDto.shippingMethod);
+            order.setNotes(checkoutDto.notes);
+            
+            // Add order items
+            List<OrderItem> orderItems = checkoutDto.items.stream().map(itemDto -> {
+                OrderItem item = new OrderItem();
+                Product product = productRepository.findById(itemDto.productId).orElseThrow();
+                item.setProduct(product);
+                item.setProductName(product.getName());
+                item.setQuantity(itemDto.quantity);
+                item.setUnitPrice(BigDecimal.valueOf(itemDto.price));
+                item.setTotalPrice(BigDecimal.valueOf(itemDto.price * itemDto.quantity));
+                item.setOrder(order);
+                return item;
+            }).collect(Collectors.toList());
+            
+            order.setOrderItems(orderItems);
+            order.calculateTotals();
+            
+            // Process the order
+            Order processedOrder = orderService.createOrder(order);
+            
+            // Clear the cart after successful checkout
+            Order cart = getOrCreateCart(user);
+            cart.getOrderItems().clear();
+            cart.calculateTotals();
+            orderRepository.save(cart);
+            
+            return ResponseEntity.ok(processedOrder);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
         }
-        
-        // Find or create customer
-        Customer customer = customerRepository.findByUserId(user.getId()).orElseGet(() -> {
-            Customer newCustomer = new Customer();
-            newCustomer.setUserId(user.getId());
-            newCustomer.setCustomerCode("CUST-" + user.getId());
-            newCustomer.setEmail(user.getEmail());
-            newCustomer.setContactPerson(user.getFirstName() + " " + user.getLastName());
-            newCustomer.setCustomerType(Customer.CustomerType.INDIVIDUAL);
-            newCustomer.setCreditLimit(BigDecimal.ZERO);
-            newCustomer.setPaymentTerms(0);
-            newCustomer.setCountry("Vietnam");
-            newCustomer.setActive(true);
-            return customerRepository.save(newCustomer);
-        });
-        
-        // Convert cart to order
-        cart.setStatus(Order.OrderStatus.PENDING);
-        cart.setOrderNumber("ORDER-" + System.currentTimeMillis());
-        cart.setCustomer(customer);
-        cart.setOrderDate(java.time.LocalDateTime.now());
-        cart.setShippingAddress(checkoutDto.shippingAddress);
-        cart.setBillingAddress(checkoutDto.billingAddress);
-        cart.setShippingMethod(checkoutDto.shippingMethod);
-        cart.setNotes(checkoutDto.notes);
-        
-        // Calculate final totals
-        cart.calculateTotals();
-        
-        Order savedOrder = orderRepository.save(cart);
-        
-        return ResponseEntity.ok(savedOrder);
     }
 
     // DTO for checkout
     public static class CheckoutDTO {
+        public String customerEmail;
+        public String customerName;
+        public String customerPhone;
         public String shippingAddress;
         public String billingAddress;
         public String shippingMethod;
         public String notes;
+        public List<CartItemDTO> items;
     }
 
     // Helper method to convert Order to CartResponseDTO
@@ -303,6 +334,47 @@ public class CartController {
         dto.setPrice(item.getUnitPrice());
         dto.setCreatedAt(item.getCreatedAt());
         dto.setUpdatedAt(item.getUpdatedAt());
+        
+        // Include full product information
+        Product product = item.getProduct();
+        if (product != null) {
+            ProductDTO productDTO = new ProductDTO();
+            productDTO.setId(product.getId());
+            productDTO.setName(product.getName());
+            productDTO.setDescription(product.getDescription());
+            productDTO.setPrice(product.getPrice());
+            productDTO.setStockQuantity(product.getStockQuantity());
+            productDTO.setIsActive(product.getIsActive());
+            productDTO.setSku(product.getProductCode());
+            
+            // Include category information
+            if (product.getCategory() != null) {
+                CategoryDTO categoryDTO = new CategoryDTO();
+                categoryDTO.setId(product.getCategory().getId());
+                categoryDTO.setName(product.getCategory().getName());
+                categoryDTO.setDescription(product.getCategory().getDescription());
+                categoryDTO.setImageUrl(product.getCategory().getImageUrl());
+                categoryDTO.setIsActive(product.getCategory().isActive());
+                productDTO.setCategory(categoryDTO);
+            }
+            
+            // Include product images
+            if (product.getImages() != null && !product.getImages().isEmpty()) {
+                List<ProductImageDTO> imageDTOs = product.getImages().stream()
+                    .map(img -> {
+                        ProductImageDTO imageDTO = new ProductImageDTO();
+                        imageDTO.setId(img.getId());
+                        imageDTO.setImageUrl(img.getImageUrl());
+                        imageDTO.setIsPrimary(img.isPrimary());
+                        return imageDTO;
+                    })
+                    .collect(Collectors.toList());
+                productDTO.setImages(imageDTOs);
+            }
+            
+            dto.setProduct(productDTO);
+        }
+        
         return dto;
     }
 }

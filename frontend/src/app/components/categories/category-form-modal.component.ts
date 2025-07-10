@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { CategoryService } from '../../services/category.service';
 import { Category } from '../../models';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-category-form-modal',
@@ -104,7 +105,6 @@ export class CategoryFormModalComponent implements OnInit {
   onSave(): void {
     if (this.categoryForm.valid) {
       const formValue = this.categoryForm.value;
-      
       const categoryData: Partial<Category> = {
         name: formValue.categoryName,
         description: formValue.description || '',
@@ -113,12 +113,8 @@ export class CategoryFormModalComponent implements OnInit {
         isActive: formValue.status === 'active',
         parentId: formValue.parentCategory ? parseInt(formValue.parentCategory) : undefined
       };
-
-      if (this.isEdit && this.data.category) {
-        this.updateCategory(categoryData);
-      } else {
-        this.createCategory(categoryData);
-      }
+      // Instead of handling upload here, return both data and file to parent
+      this.dialogRef.close({ categoryData, imageFile: this.selectedImage });
     } else {
       this.markFormGroupTouched();
     }
@@ -197,7 +193,11 @@ export class CategoryFormModalComponent implements OnInit {
       return imagePath;
     }
     
-    return `http://localhost:8080/uploads/categories/${imagePath}`;
+    return `${this.getBackendBaseUrl()}/uploads/categories/${imagePath}`;
+  }
+
+  getBackendBaseUrl(): string {
+    return environment.apiUrl.replace(/\/api$/, '');
   }
 
   // Form validation helpers
@@ -220,5 +220,13 @@ export class CategoryFormModalComponent implements OnInit {
       }
     }
     return '';
+  }
+
+  get modalTitle(): string {
+    return this.isEdit ? 'Edit Category' : 'Add Category';
+  }
+
+  get breadcrumbLabel(): string {
+    return this.isEdit ? 'Edit' : 'Add';
   }
 }

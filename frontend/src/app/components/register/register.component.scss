@@ -23,7 +23,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 60px;
+
   position: relative;
   
   @media (max-width: 768px) {
@@ -172,34 +172,36 @@
 .checkbox-container {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   cursor: pointer;
   font-size: 14px;
   line-height: 1.5;
-  
-  a {
-    color: #89cff0;
-    text-decoration: none;
-    
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-}
-
-.checkbox-input {
-  display: none;
-}
-
-.checkbox-custom {
-  width: 18px;
-  height: 18px;
-  border: 2px solid #e9ecef;
-  border-radius: 4px;
+  user-select: none;
   position: relative;
-  transition: all 0.3s ease;
-  
-  &::after {
+
+  .checkbox-input {
+    display: none;
+  }
+
+  .checkbox-custom {
+    display: inline-block;
+    vertical-align: middle;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #e9ecef;
+    border-radius: 4px;
+    margin-right: 8px;
+    position: relative;
+    transition: all 0.3s ease;
+    background: #fff;
+  }
+
+  .checkbox-input:checked + .checkbox-custom {
+    background: #89cff0;
+    border-color: #89cff0;
+  }
+
+  .checkbox-custom::after {
     content: '';
     position: absolute;
     top: 2px;
@@ -212,14 +214,18 @@
     opacity: 0;
     transition: opacity 0.3s ease;
   }
-}
 
-.checkbox-input:checked + .checkbox-custom {
-  background: #89cff0;
-  border-color: #89cff0;
-  
-  &::after {
+  .checkbox-input:checked + .checkbox-custom::after {
     opacity: 1;
+  }
+
+  a {
+    color: #89cff0;
+    text-decoration: none;
+    margin-left: 2px;
+    &:hover {
+      text-decoration: underline;
+    }
   }
 }
 
@@ -355,5 +361,45 @@
   
   .form-header h2 {
     font-size: 1.5rem;
+  }
+}
+
+.register-left {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.brand-image {
+  width: 100%;
+  height: 100%;
+}
+
+.brand-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 32px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  display: block;
+  margin: 0 auto;
+  background: #fff0;
+}
+
+@media (max-width: 900px) {
+  .brand-image img {
+    border-radius: 24px;
+  }
+}
+
+@media (max-width: 600px) {
+  .register-left {
+    height: 180px;
+  }
+  .brand-image img {
+    border-radius: 16px;
   }
 }

@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -73,7 +74,7 @@ public class CategoryController {
         return ResponseEntity.notFound().build();
     }
 
-    @PostMapping("/{id}/image")
+    @PostMapping(value = "/{id}/image", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> uploadCategoryImage(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
         try {
@@ -92,15 +93,16 @@ public class CategoryController {
                 Category category = categoryOpt.get();
                 category.setImageUrl("/" + uploadsDir + "/" + filename);
                 categoryRepository.save(category);
-                return ResponseEntity.ok().body("Image uploaded and category updated successfully");
+                // Return JSON response
+                return ResponseEntity.ok().body(java.util.Collections.singletonMap("message", "Image uploaded and category updated successfully"));
             } else {
                 // Delete the uploaded file if category not found
                 Files.deleteIfExists(filePath);
-                return ResponseEntity.status(404).body("Category not found");
+                return ResponseEntity.status(404).body(java.util.Collections.singletonMap("error", "Category not found"));
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).body("Failed to upload image: " + e.getMessage());
+            return ResponseEntity.status(500).body(java.util.Collections.singletonMap("error", "Failed to upload image: " + e.getMessage()));
         }
     }
 } 

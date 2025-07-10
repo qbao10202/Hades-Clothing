@@ -8,6 +8,7 @@ import { ProductDTO, Category } from '../../models';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ProductFormModalComponent } from './product-form-modal.component';
 import { DeleteConfirmationComponent } from '../shared/delete-confirmation.component';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-product-admin',
@@ -128,20 +129,16 @@ export class ProductAdminComponent implements OnInit {
           next: (updatedProduct: ProductDTO) => {
             if (imageFile) {
               this.productService.uploadProductImage(updatedProduct.id!, imageFile).subscribe(() => {
-                this.dataSource.data = this.dataSource.data.map((p: ProductDTO) => 
-                  p.id === updatedProduct.id ? { ...p, ...updatedProduct } : p
-                );
-                this.snackBar.open('Cập nhật sản phẩm thành công', 'Đóng', { duration: 3000 });
+                this.loadProducts();
+                this.snackBar.open('Update product successfully', 'Close', { duration: 3000 });
               });
             } else {
-              this.dataSource.data = this.dataSource.data.map((p: ProductDTO) => 
-                p.id === updatedProduct.id ? { ...p, ...updatedProduct } : p
-              );
-              this.snackBar.open('Cập nhật sản phẩm thành công', 'Đóng', { duration: 3000 });
+              this.loadProducts();
+              this.snackBar.open('Update product successfully', 'Close', { duration: 3000 });
             }
           },
           error: (err: any) => {
-            this.snackBar.open('Lỗi khi cập nhật sản phẩm', 'Đóng', { duration: 3000 });
+            this.snackBar.open('Error when update product', 'Close', { duration: 3000 });
           }
         });
       }
@@ -263,10 +260,10 @@ export class ProductAdminComponent implements OnInit {
       }
       // If it starts with /uploads, prefix with backend host
       if (product.imageUrl.startsWith('/uploads')) {
-        return `http://localhost:8080${product.imageUrl}`;
+        return `${this.getBackendBaseUrl()}${product.imageUrl}`;
       }
       // Otherwise, construct the full URL
-      return `http://localhost:8080/api/uploads/products/${product.id}/${product.imageUrl}`;
+      return `${this.getBackendBaseUrl()}/api/uploads/products/${product.id}/${product.imageUrl}`;
     }
     
     // If no direct imageUrl, check images array
@@ -281,11 +278,11 @@ export class ProductAdminComponent implements OnInit {
       
       // If imageUrl starts with /uploads, prefix with backend host
       if (imageUrl.startsWith('/uploads')) {
-        return `http://localhost:8080${imageUrl}`;
+        return `${this.getBackendBaseUrl()}${imageUrl}`;
       }
       
       // Otherwise, construct the full URL
-      return `http://localhost:8080/api/uploads/products/${product.id}/${imageUrl}`;
+      return `${this.getBackendBaseUrl()}/api/uploads/products/${product.id}/${imageUrl}`;
     }
     
     // Return default image if no image found
@@ -294,5 +291,9 @@ export class ProductAdminComponent implements OnInit {
 
   onImageError(event: any): void {
     event.target.src = '/assets/default-product.svg';
+  }
+
+  getBackendBaseUrl(): string {
+    return environment.apiUrl.replace(/\/api$/, '');
   }
 }

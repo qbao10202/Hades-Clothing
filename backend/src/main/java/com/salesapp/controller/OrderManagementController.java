@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/admin/orders")
+@RequestMapping("/api/admin/orders-management")
 @Tag(name = "Order Management", description = "Admin and Seller Order management APIs")
 @CrossOrigin(origins = "*")
 public class OrderManagementController {

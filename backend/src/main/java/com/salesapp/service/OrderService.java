@@ -2,8 +2,11 @@ package com.salesapp.service;
 
 import com.salesapp.entity.*;
 import com.salesapp.repository.OrderRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -14,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
+@Transactional
 public class OrderService {
     
     @Autowired
@@ -21,6 +25,31 @@ public class OrderService {
     
     @Autowired
     private ProductService productService;
+    
+    @PersistenceContext
+    private EntityManager entityManager;
+    
+    public Page<Order> getAllOrdersWithDetails(Pageable pageable) {
+        // First, get the total count
+        Long total = entityManager.createQuery(
+            "SELECT COUNT(o) FROM Order o", Long.class)
+            .getSingleResult();
+        
+        // Then get the paginated data with all necessary joins
+        List<Order> orders = entityManager.createQuery(
+            "SELECT DISTINCT o FROM Order o " +
+            "LEFT JOIN FETCH o.customer " +
+            "LEFT JOIN FETCH o.orderItems oi " +
+            "LEFT JOIN FETCH oi.product p " +
+            "LEFT JOIN FETCH p.category " +
+            "LEFT JOIN FETCH p.images " +
+            "ORDER BY o.createdAt DESC", Order.class)
+            .setFirstResult((int) pageable.getOffset())
+            .setMaxResults(pageable.getPageSize())
+            .getResultList();
+        
+        return new PageImpl<>(orders, pageable, total);
+    }
     
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
@@ -197,14 +226,80 @@ public class OrderService {
         return savedOrder;
     }
     
+    @Transactional
     public Order updateOrderStatus(Long orderId, Order.OrderStatus status) {
-        Optional<Order> orderOpt = orderRepository.findById(orderId);
-        if (orderOpt.isPresent()) {
-            Order order = orderOpt.get();
-            order.setStatus(status);
-            return orderRepository.save(order);
+        if (orderId == null) {
+            throw new IllegalArgumentException("Order ID cannot be null");
         }
-        throw new RuntimeException("Order not found with id: " + orderId);
+        if (status == null) {
+            throw new IllegalArgumentException("Order status cannot be null");
+        }
+
+        System.out.println("Updating order " + orderId + " to status " + status);
+        
+        // Use findById with a direct database query to avoid lazy loading issues
+        Order order = orderRepository.findById(orderId)
+            .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+
+        System.out.println("Current order status: " + order.getStatus());
+        
+        // Validate status transition
+        if (!isValidStatusTransition(order.getStatus(), status)) {
+            throw new IllegalStateException(
+                "Invalid status transition from " + order.getStatus() + " to " + status
+            );
+        }
+
+        try {
+            order.setStatus(status);
+            order.setUpdatedAt(LocalDateTime.now());
+            Order savedOrder = orderRepository.save(order);
+            System.out.println("Order status updated successfully to: " + savedOrder.getStatus());
+            
+            // Return only the necessary fields to avoid lazy loading issues
+            Order response = new Order();
+            response.setId(savedOrder.getId());
+            response.setOrderNumber(savedOrder.getOrderNumber());
+            response.setStatus(savedOrder.getStatus());
+            response.setUpdatedAt(savedOrder.getUpdatedAt());
+            
+            return response;
+        } catch (Exception e) {
+            System.out.println("Error saving order: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to update order status: " + e.getMessage());
+        }
+    }
+
+    private boolean isValidStatusTransition(Order.OrderStatus currentStatus, Order.OrderStatus newStatus) {
+        if (currentStatus == newStatus) {
+            return true; // Allow setting the same status
+        }
+
+        switch (currentStatus) {
+            case CART:
+                return newStatus == Order.OrderStatus.PENDING;
+            case PENDING:
+                return newStatus == Order.OrderStatus.CONFIRMED || 
+                       newStatus == Order.OrderStatus.CANCELLED;
+            case CONFIRMED:
+                return newStatus == Order.OrderStatus.PROCESSING || 
+                       newStatus == Order.OrderStatus.CANCELLED;
+            case PROCESSING:
+                return newStatus == Order.OrderStatus.SHIPPED || 
+                       newStatus == Order.OrderStatus.CANCELLED;
+            case SHIPPED:
+                return newStatus == Order.OrderStatus.DELIVERED || 
+                       newStatus == Order.OrderStatus.CANCELLED;
+            case DELIVERED:
+                return newStatus == Order.OrderStatus.REFUNDED;
+            case CANCELLED:
+                return false; // Cannot transition from CANCELLED
+            case REFUNDED:
+                return false; // Cannot transition from REFUNDED
+            default:
+                return false;
+        }
     }
     
     public List<Order> getOrdersByDateRange(LocalDateTime startDate, LocalDateTime endDate) {

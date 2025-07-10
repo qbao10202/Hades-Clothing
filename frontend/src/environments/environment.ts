@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:8080/api',
+  apiUrl: '/api',
   stripePublicKey: 'pk_test_your-stripe-public-key',
   paypalClientId: 'your-paypal-client-id',
   appName: 'Sales Application',

@@ -77,10 +77,10 @@
           <th mat-header-cell *matHeaderCellDef>Actions</th>
           <td mat-cell *matCellDef="let category">
             <div class="action-buttons">
-              <button mat-icon-button color="primary" (click)="editCategory(category)" title="Edit">
+              <button mat-icon-button color="primary" (click)="editCategory(category); $event.stopPropagation()" title="Edit">
                 <mat-icon>edit</mat-icon>
               </button>
-              <button mat-icon-button color="warn" (click)="deleteCategory(category)" title="Delete">
+              <button mat-icon-button color="warn" (click)="deleteCategory(category); $event.stopPropagation()" title="Delete">
                 <mat-icon>delete</mat-icon>
               </button>
             </div>

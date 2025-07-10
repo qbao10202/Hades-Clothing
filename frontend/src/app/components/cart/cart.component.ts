@@ -6,97 +6,93 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Cart, CartItem, User } from '../../models';
 import { CartService } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-cart',
   template: `
     <div class="cart-page">
+      <button class="floating-home-btn" mat-fab color="primary" routerLink="/home">
+        <mat-icon>home</mat-icon>
+      </button>
       <div class="container">
         <div class="cart-header">
           <h1>YOUR SHOPPING CART: <span class="cart-count">{{ cart.totalItems }}</span></h1>
         </div>
-
-        <div *ngIf="cart.items.length > 0; else emptyCart" class="cart-content">
-          <div class="cart-items">
-            <div *ngFor="let item of cart.items" class="cart-item">
-              <div class="item-image">
-                <img [src]="getProductImage(item)" [alt]="item.product?.name">
+        <ng-container *ngIf="cart.items && cart.items.length > 0; else emptyCart">
+          <div class="cart-content">
+            <div class="cart-items">
+              <div *ngFor="let item of cart.items" class="cart-item">
+                <div class="item-image">
+                  <img [src]="getProductImage(item)" [alt]="item.product?.name">
+                </div>
+                
+                <div class="item-details">
+                  <h3 class="item-name">{{ item.product?.name }}</h3>
+                  <p class="item-category">{{ item.product?.category?.name }}</p>
+                  <div class="item-price">{{ formatCurrency(item.price) }}</div>
+                </div>
+                
+                <div class="item-quantity">
+                  <button class="quantity-btn" (click)="decreaseQuantity(item)" [disabled]="item.quantity <= 1">
+                    <mat-icon>remove</mat-icon>
+                  </button>
+                  <span class="quantity">{{ item.quantity }}</span>
+                  <button class="quantity-btn" (click)="increaseQuantity(item)">
+                    <mat-icon>add</mat-icon>
+                  </button>
+                </div>
+                
+                <div class="item-actions">
+                  <button class="action-btn" (click)="removeItem(item)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                  <button class="action-btn wishlist-btn" (click)="addToWishlist(item)">
+                    <mat-icon>favorite_border</mat-icon>
+                  </button>
+                </div>
               </div>
-              
-              <div class="item-details">
-                <h3 class="item-name">{{ item.product?.name }}</h3>
-                <p class="item-category">{{ item.product?.category?.name }}</p>
-                <div class="item-price">{{ formatCurrency(item.price) }}</div>
-              </div>
-              
-              <div class="item-quantity">
-                <button class="quantity-btn" (click)="decreaseQuantity(item)" [disabled]="item.quantity <= 1">
-                  <mat-icon>remove</mat-icon>
+            </div>
+            
+            <div class="cart-summary">
+              <div class="summary-card">
+                <div class="summary-line">
+                  <span>Order Amount:</span>
+                  <span class="amount">{{ formatCurrency(cart.subtotal) }}</span>
+                </div>
+                <div class="summary-line">
+                  <span>Delivery:</span>
+                  <span class="amount">{{ cart.shippingAmount === 0 ? 'Free' : formatCurrency(cart.shippingAmount) }}</span>
+                </div>
+                <div class="discount-section">
+                  <div class="discount-toggle" (click)="toggleDiscountCode()">
+                    <span>Do you have a discount code?</span>
+                    <mat-icon>{{ showDiscountCode ? 'expand_less' : 'expand_more' }}</mat-icon>
+                  </div>
+                  <div class="discount-input" *ngIf="showDiscountCode">
+                    <mat-form-field appearance="outline">
+                      <input matInput [(ngModel)]="discountCode" placeholder="Enter discount code">
+                      <button mat-button matSuffix (click)="applyDiscount()">Apply</button>
+                    </mat-form-field>
+                  </div>
+                </div>
+                <div class="summary-line total">
+                  <span>TOTAL PRICE:</span>
+                  <span class="total-amount">{{ formatCurrency(cart.totalAmount) }}</span>
+                </div>
+                
+                <button class="checkout-btn" (click)="proceedToCheckout()">
+                  Checkout
                 </button>
-                <span class="quantity">{{ item.quantity }}</span>
-                <button class="quantity-btn" (click)="increaseQuantity(item)">
-                  <mat-icon>add</mat-icon>
-                </button>
-              </div>
-              
-              <div class="item-actions">
-                <button class="action-btn" (click)="removeItem(item)">
-                  <mat-icon>delete</mat-icon>
-                </button>
-                <button class="action-btn wishlist-btn" (click)="addToWishlist(item)">
-                  <mat-icon>favorite_border</mat-icon>
-                </button>
+                
+                
+                <div class="return-policy">
+                  <p>You always have 30 days to decide whether you want to keep or return your order. The return policy varies depending on the country in which the purchase was made. Further information on returns can be found in our terms and conditions.</p>
+                </div>
               </div>
             </div>
           </div>
-          
-          <div class="cart-summary">
-            <div class="summary-card">
-              <div class="summary-line">
-                <span>Order Amount:</span>
-                <span class="amount">{{ formatCurrency(cart.subtotal) }}</span>
-              </div>
-              <div class="summary-line">
-                <span>Delivery:</span>
-                <span class="amount">{{ cart.shippingAmount === 0 ? 'Free' : formatCurrency(cart.shippingAmount) }}</span>
-              </div>
-              <div class="discount-section">
-                <div class="discount-toggle" (click)="toggleDiscountCode()">
-                  <span>Do you have a discount code?</span>
-                  <mat-icon>{{ showDiscountCode ? 'expand_less' : 'expand_more' }}</mat-icon>
-                </div>
-                <div class="discount-input" *ngIf="showDiscountCode">
-                  <mat-form-field appearance="outline">
-                    <input matInput [(ngModel)]="discountCode" placeholder="Enter discount code">
-                    <button mat-button matSuffix (click)="applyDiscount()">Apply</button>
-                  </mat-form-field>
-                </div>
-              </div>
-              <div class="summary-line total">
-                <span>TOTAL PRICE:</span>
-                <span class="total-amount">{{ formatCurrency(cart.totalAmount) }}</span>
-              </div>
-              
-              <button class="checkout-btn" (click)="proceedToCheckout()">
-                Checkout
-              </button>
-              
-              <div class="payment-methods">
-                <span>WE ACCEPT:</span>
-                <div class="payment-icons">
-                  <img src="assets/payment/mastercard.png" alt="Mastercard">
-                  <img src="assets/payment/paypal.png" alt="PayPal">
-                  <img src="assets/payment/visa.png" alt="Visa">
-                </div>
-              </div>
-              
-              <div class="return-policy">
-                <p>You always have 30 days to decide whether you want to keep or return your order. The return policy varies depending on the country in which the purchase was made. Further information on returns can be found in our terms and conditions.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
+        </ng-container>
         <ng-template #emptyCart>
           <div class="empty-cart">
             <mat-icon class="empty-icon">shopping_cart</mat-icon>
@@ -435,6 +431,28 @@ import { AuthService } from '../../services/auth.service';
       font-size: 1.1rem;
     }
 
+    .floating-home-btn {
+      position: fixed;
+      top: 32px;
+      left: 32px;
+      z-index: 1000;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      border-radius: 50%;
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: box-shadow 0.2s, background 0.2s;
+    }
+    .floating-home-btn:hover {
+      background: #1976d2;
+      box-shadow: 0 8px 32px rgba(25, 118, 210, 0.18);
+    }
+    .floating-home-btn mat-icon {
+      font-size: 28px;
+    }
+
     @media (max-width: 1024px) {
       .cart-content {
         grid-template-columns: 1fr;
@@ -574,7 +592,19 @@ export class CartComponent implements OnInit, OnDestroy {
   }
 
   getProductImage(item: CartItem): string {
-    return item.product?.images?.[0]?.imageUrl || 'assets/placeholder.jpg';
+    if (item.product?.images && item.product.images.length > 0) {
+      const imageUrl = item.product.images[0].imageUrl;
+      if (imageUrl) {
+        if (imageUrl.startsWith('/uploads')) {
+          return `${this.getBackendBaseUrl()}${imageUrl}`;
+        }
+        if (imageUrl.startsWith('http')) {
+          return imageUrl;
+        }
+        return `${this.getBackendBaseUrl()}/uploads/products/${item.product.id}/${imageUrl}`;
+      }
+    }
+    return 'assets/default-product.svg';
   }
 
   formatCurrency(amount: number): string {
@@ -599,5 +629,9 @@ export class CartComponent implements OnInit, OnDestroy {
   addToWishlist(item: CartItem): void {
     // Logic to add the item to the user's wishlist
     this.snackBar.open('Added to wishlist', 'Close', { duration: 2000 });
+  }
+
+  getBackendBaseUrl(): string {
+    return environment.apiUrl.replace(/\/api$/, '');
   }
 }

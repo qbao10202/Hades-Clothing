@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ProductDTO } from '../../models';
 import { ProductService } from '../../services/product.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-product-detail',
@@ -71,8 +72,12 @@ export class ProductDetailComponent implements OnInit {
 
   getImageUrl(url: string): string {
     if (url && url.startsWith('/uploads/')) {
-      return 'http://localhost:8080' + url;
+      return this.getBackendBaseUrl() + url;
     }
     return url;
+  }
+
+  getBackendBaseUrl(): string {
+    return environment.apiUrl.replace(/\/api$/, '');
   }
 } 

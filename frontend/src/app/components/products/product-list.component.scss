@@ -77,27 +77,77 @@
   }
 }
 
+// Plain HTML/CSS search bar styles
 .search-bar {
-  flex: 1;
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 8px;
+  border: 1.5px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  padding: 0 16px;
+  height: 48px;
   max-width: 500px;
-  
-  .search-input {
-    width: 100%;
-    
-    .search-icon {
-      color: #007bff;
-      cursor: pointer;
-      transition: color 0.3s ease;
-      
-      &:hover {
-        color: #0056b3;
-      }
-    }
-  }
-  
-  @media (max-width: 768px) {
-    max-width: 100%;
-  }
+  width: 100%;
+  margin-right: 12px;
+}
+
+.search-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 1.1rem;
+  color: #222;
+  flex: 1 1 auto;
+  padding: 0 8px;
+  height: 44px;
+}
+
+.search-input::placeholder {
+  color: #888;
+  font-size: 1.08rem;
+  letter-spacing: 0.01em;
+  opacity: 1;
+}
+
+.search-input:focus {
+  background: #f3f7ff;
+}
+
+.search-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  height: 44px;
+  transition: background 0.2s;
+}
+
+.search-btn svg {
+  display: block;
+  stroke: #007bff;
+  transition: stroke 0.2s;
+}
+
+.search-btn:hover svg {
+  stroke: #0056b3;
+}
+
+// Accessibility: visually hidden label
+.visually-hidden {
+  position: absolute !important;
+  height: 1px; width: 1px;
+  overflow: hidden;
+  clip: rect(1px, 1px, 1px, 1px);
+  white-space: nowrap;
+}
+
+// Remove Angular Material outline if present
+.search-bar .mat-form-field-outline,
+.search-bar .mat-form-field-outline-thick {
+  display: none !important;
 }
 
 .sort-filter {

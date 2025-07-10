@@ -1,30 +1,33 @@
 # Multi-stage build for production-ready image
-FROM maven:3.9.5-openjdk-17 AS build
+FROM maven:3.9.6-eclipse-temurin-17 AS build
 
 # Set working directory
 WORKDIR /app
 
-# Copy pom.xml and download dependencies
+# Copy all source filespermissions
 COPY pom.xml .
-RUN mvn dependency:go-offline -B
-
-# Copy source code
 COPY src ./src
 
-# Build the application
-RUN mvn clean package -DskipTests
+RUN mvn dependency:go-offline -B
+
+# Build the application (dependencies will be downloaded during build)
+RUN mvn clean package -DskipTests -B
 
 # Production stage
-FROM openjdk:17-jre-slim
+FROM eclipse-temurin:17-jre-alpine
+
+# Install curl for health checks
+RUN apk add --no-cache curl
 
 # Create app user for security
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+RUN addgroup -g 1001 -S appuser && \
+    adduser -S -D -H -u 1001 -h /app -s /sbin/nologin -G appuser -g appuser appuser
 
 # Set working directory
 WORKDIR /app
 
 # Copy the built jar from build stage
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/target/sales-backend-1.0.0.jar app.jar
 
 # Create logs directory
 RUN mkdir -p /app/logs && chown -R appuser:appuser /app

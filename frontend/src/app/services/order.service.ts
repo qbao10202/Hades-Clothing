@@ -3,12 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { Order } from '../models';
+import { map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
 export class OrderService {
-  private apiUrl = `${environment.apiUrl}/orders`;
+  private apiUrl = `${environment.apiUrl}/admin/orders`;
   private cartApiUrl = `${environment.apiUrl}/cart`;
 
   constructor(private http: HttpClient) { }
@@ -42,36 +43,67 @@ export class OrderService {
 
   // Admin/Seller methods
   getAllOrders(params: any = {}): Observable<any> {
-    const queryParams = new URLSearchParams(params).toString();
-    return this.http.get<any>(`${environment.apiUrl}/admin/orders?${queryParams}`);
+    const defaultParams = {
+      page: 0,
+      size: 10,
+      sortBy: 'orderDate',
+      sortDir: 'desc',
+      ...params
+    };
+
+    // Filter out undefined values
+    const filteredParams = Object.entries(defaultParams)
+      .filter(([_, value]) => value !== undefined && value !== null && value !== '')
+      .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
+
+    const queryParams = new URLSearchParams(filteredParams as any).toString();
+    console.log('Requesting orders with URL:', `${this.apiUrl}?${queryParams}`);
+    
+    return this.http.get<any>(`${this.apiUrl}?${queryParams}`).pipe(
+      map(response => {
+        console.log('Raw API response:', response);
+        // If response is an array, wrap it in a paginated format
+        if (Array.isArray(response)) {
+          return {
+            content: response,
+            totalElements: response.length,
+            number: defaultParams.page,
+            size: defaultParams.size,
+            totalPages: Math.ceil(response.length / defaultParams.size)
+          };
+        }
+        // If response is already paginated, return as is
+        return response;
+      })
+    );
+  }
+
+  getOrderStatistics(startDate: Date | null | undefined, endDate: Date | null | undefined): Observable<any> {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate.toISOString().split('T')[0]);
+    if (endDate) params.append('endDate', endDate.toISOString().split('T')[0]);
+    
+    return this.http.get<any>(`${this.apiUrl}/statistics?${params.toString()}`);
   }
 
   updateOrderStatus(id: number, status: string): Observable<Order> {
-    return this.http.put<Order>(`${environment.apiUrl}/admin/orders/${id}/status?status=${status}`, {});
+    return this.http.put<Order>(`${this.apiUrl}/${id}/status?status=${status}`, null);
   }
 
   updatePaymentStatus(id: number, paymentStatus: string): Observable<Order> {
-    return this.http.put<Order>(`${environment.apiUrl}/admin/orders/${id}/payment-status?paymentStatus=${paymentStatus}`, {});
+    return this.http.put<Order>(`${this.apiUrl}/${id}/payment-status?paymentStatus=${paymentStatus}`, {});
   }
 
   updateShippingStatus(id: number, shippingStatus: string, trackingNumber?: string): Observable<Order> {
     const params = trackingNumber ? `?shippingStatus=${shippingStatus}&trackingNumber=${trackingNumber}` : `?shippingStatus=${shippingStatus}`;
-    return this.http.put<Order>(`${environment.apiUrl}/admin/orders/${id}/shipping-status${params}`, {});
-  }
-
-  getOrderStatistics(startDate?: string, endDate?: string): Observable<any> {
-    const params = new URLSearchParams();
-    if (startDate) params.append('startDate', startDate);
-    if (endDate) params.append('endDate', endDate);
-    
-    return this.http.get<any>(`${environment.apiUrl}/admin/orders/statistics?${params.toString()}`);
+    return this.http.put<Order>(`${this.apiUrl}/${id}/shipping-status${params}`, {});
   }
 
   searchOrders(query: string, page: number = 0, size: number = 10): Observable<any> {
-    return this.http.get<any>(`${environment.apiUrl}/admin/orders/search?query=${query}&page=${page}&size=${size}`);
+    return this.http.get<any>(`${this.apiUrl}/search?query=${query}&page=${page}&size=${size}`);
   }
 
   addOrderNotes(id: number, notes: string): Observable<Order> {
-    return this.http.put<Order>(`${environment.apiUrl}/admin/orders/${id}/notes`, { notes });
+    return this.http.put<Order>(`${this.apiUrl}/${id}/notes`, { notes });
   }
 }

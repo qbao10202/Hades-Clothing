@@ -4,9 +4,9 @@ spring:
   application:
     name: sales-backend
   datasource:
-    url: jdbc:mysql://localhost:3306/sales_app?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/sales_app?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
     username: root
-    password: 
+    password:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -36,18 +36,6 @@ spring:
   cache:
     type: simple
     cache-names: products,users,orders,customers
-
-#  mail:
-#    host: smtp.gmail.com
-#    port: 587
-#    username: ${MAIL_USERNAME:your-email@gmail.com}
-#    password: ${MAIL_PASSWORD:your-app-password}
-#    properties:
-#      mail:
-#        smtp:
-#          auth: true
-#          starttls:
-#            enable: true
 
 management:
   endpoints:
@@ -86,25 +74,6 @@ springdoc:
     path: /swagger-ui.html
     operationsSorter: method
 
-# Payment Gateway Configuration
-#payment:
-#  stripe:
-#    public-key: ${STRIPE_PUBLIC_KEY:pk_test_your-stripe-public-key}
-#    secret-key: ${STRIPE_SECRET_KEY:sk_test_your-stripe-secret-key}
-#  paypal:
-#    client-id: ${PAYPAL_CLIENT_ID:your-paypal-client-id}
-#    client-secret: ${PAYPAL_CLIENT_SECRET:your-paypal-client-secret}
-#    mode: sandbox
-#  momo:
-#    access-key: ${MOMO_ACCESS_KEY:your-momo-access-key}
-#    secret-key: ${MOMO_SECRET_KEY:your-momo-secret-key}
-#    endpoint: https://test-payment.momo.vn/v2/gateway/api/create
-#  vnpay:
-#    tmn-code: ${VNPAY_TMN_CODE:your-vnpay-tmn-code}
-#    hash-secret: ${VNPAY_HASH_SECRET:your-vnpay-hash-secret}
-#    url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-
-# Application Configuration
 app:
   name: ${APP_NAME:Sales Application}
   version: ${APP_VERSION:1.0.0}
@@ -135,7 +104,6 @@ spring:
     show-sql: false
     hibernate:
       ddl-auto: validate
-  # Use simple cache for dev profile
   cache:
     type: simple
     cache-names: products,users,orders,customers
@@ -159,7 +127,6 @@ spring:
     show-sql: false
     hibernate:
       ddl-auto: validate
-  # Use simple cache for prod profile (can be overridden to Redis if needed)
   cache:
     type: simple
     cache-names: products,users,orders,customers
@@ -196,12 +163,6 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
         format_sql: true
-  # Use simple cache for local profile
   cache:
     type: simple
     cache-names: products,users,orders,customers
-
-logging:
-  level:
-    com.salesapp: DEBUG
-    org.springframework.security: DEBUG

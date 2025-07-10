@@ -111,121 +111,177 @@
           Clear Filters
         </button>
       </mat-menu>
-      
-      <button mat-raised-button color="primary" (click)="addOrder()" class="add-btn">
-        <mat-icon>add</mat-icon>
-        Add Order
-      </button>
     </div>
   </div>
 
   <!-- Orders Table -->
   <div class="data-table-container">
-    <table mat-table [dataSource]="dataSource" matSort class="orders-table">
-      <!-- Product Name Column -->
-      <ng-container matColumnDef="productName">
-        <th mat-header-cell *matHeaderCellDef>Product Name</th>
-        <td mat-cell *matCellDef="let order">
-          <div class="product-info">
-            <img [src]="getOrderProductImage(order)" [alt]="getOrderProductName(order)" class="product-image">
-            <div class="product-details">
-              <div class="product-name">{{ getOrderProductName(order) }}</div>
-              <div class="product-category">{{ getOrderProductCategory(order) }}</div>
-            </div>
-          </div>
-        </td>
+    <table mat-table [dataSource]="dataSource" matSort (matSortChange)="onSortChange()" multiTemplateDataRows class="orders-table">
+      <!-- Order ID Column -->
+      <ng-container matColumnDef="orderId">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header="orderNumber">Order ID</th>
+        <td mat-cell *matCellDef="let order">{{ order.orderNumber }}</td>
+      </ng-container>
+
+      <!-- Created Column -->
+      <ng-container matColumnDef="created">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header="createdAt">Created</th>
+        <td mat-cell *matCellDef="let order">{{ order.createdAt | date:'MMM dd, yyyy' }}</td>
       </ng-container>
 
       <!-- Customer Name Column -->
       <ng-container matColumnDef="customerName">
-        <th mat-header-cell *matHeaderCellDef>Customer Name</th>
-        <td mat-cell *matCellDef="let order">
-          <div class="customer-info">
-            <img [src]="getCustomerAvatar(order)" [alt]="getCustomerName(order)" class="customer-avatar">
-            <div class="customer-details">
-              <div class="customer-name">{{ getCustomerName(order) }}</div>
-              <div class="customer-type">{{ getCustomerType(order) }}</div>
-            </div>
-          </div>
-        </td>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header="customerName">Customer Name</th>
+        <td mat-cell *matCellDef="let order">{{ order.customerName || 'N/A' }}</td>
       </ng-container>
 
-      <!-- Order ID Column -->
-      <ng-container matColumnDef="orderId">
-        <th mat-header-cell *matHeaderCellDef>Order Id</th>
-        <td mat-cell *matCellDef="let order">
-          <div class="order-id">{{ order.orderNumber }}</div>
-          <div class="order-date">{{ order.orderDate | date:'MMM dd, yyyy' }}</div>
-        </td>
-      </ng-container>
-
-      <!-- Amount Column -->
-      <ng-container matColumnDef="amount">
-        <th mat-header-cell *matHeaderCellDef>Amount</th>
-        <td mat-cell *matCellDef="let order">
-          <div class="amount">{{ order.totalAmount | currency:'USD':'symbol':'1.2-2' }}</div>
-          <div class="payment-method">{{ getPaymentMethod(order) }}</div>
-        </td>
+      <!-- Total Column -->
+      <ng-container matColumnDef="total">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header="totalAmount">Total</th>
+        <td mat-cell *matCellDef="let order">{{ order.totalAmount | currency:'VND':'symbol':'1.0-0' }}</td>
       </ng-container>
 
       <!-- Status Column -->
       <ng-container matColumnDef="status">
-        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header="status">Status</th>
         <td mat-cell *matCellDef="let order">
-          <span class="status-badge" [ngClass]="getStatusClass(order.status)">
+          <div class="status-badge" [ngClass]="getStatusClass(order.status)">
             {{ order.status }}
-          </span>
+          </div>
         </td>
       </ng-container>
 
-      <!-- Action Column -->
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef>Action</th>
+      <!-- Edit Column -->
+      <ng-container matColumnDef="edit">
+        <th mat-header-cell *matHeaderCellDef>Change Status</th>
         <td mat-cell *matCellDef="let order">
-          <button mat-icon-button [matMenuTriggerFor]="actionMenu" class="action-menu-btn">
+          <mat-form-field appearance="outline" class="status-select">
+            <mat-select 
+              [value]="order.status" 
+              [disabled]="getAllowedStatusOptions(order.status).length <= 1"
+              (selectionChange)="onStatusChange($event, order)">
+              <mat-option *ngFor="let status of getAllowedStatusOptions(order.status)" [value]="status.value">
+                {{ status.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </td>
+      </ng-container>
+
+      <!-- Actions Column -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let order">
+          <button mat-icon-button [matMenuTriggerFor]="menu" (click)="$event.stopPropagation()">
             <mat-icon>more_vert</mat-icon>
           </button>
-          <mat-menu #actionMenu="matMenu">
-            <button mat-menu-item [routerLink]="['/admin/orders', order.id]">
-              <mat-icon>visibility</mat-icon>
-              Details
-            </button>
-            <button mat-menu-item (click)="updateOrderStatus(order)">
-              <mat-icon>edit</mat-icon>
-              Update Status
-            </button>
+          <mat-menu #menu="matMenu">
             <button mat-menu-item (click)="printOrder(order)">
               <mat-icon>print</mat-icon>
-              Print
+              <span>Print</span>
             </button>
           </mat-menu>
         </td>
       </ng-container>
 
+      <!-- Expanded Content Column -->
+      <ng-container matColumnDef="expandedDetail">
+        <td mat-cell *matCellDef="let order" [attr.colspan]="displayedColumns.length">
+          <div class="order-detail" [@detailExpand]="order == expandedOrder ? 'expanded' : 'collapsed'">
+            <div class="order-info">
+              <div class="info-group">
+                <h4>Customer Information</h4>
+                <p><strong>Name:</strong> {{ order.customerName || 'N/A' }}</p>
+                <p><strong>Email:</strong> {{ order.customerEmail || 'N/A' }}</p>
+                <p><strong>Phone:</strong> {{ order.customerPhone || 'N/A' }}</p>
+              </div>
+              <div class="info-group">
+                <h4>Shipping Information</h4>
+                <p><strong>Address:</strong> {{ order.shippingAddress || 'N/A' }}</p>
+                <p><strong>Method:</strong> {{ order.shippingMethod || 'N/A' }}</p>
+                <p><strong>Status:</strong> {{ order.shippingStatus }}</p>
+                <p><strong>Tracking:</strong> {{ order.trackingNumber || 'N/A' }}</p>
+              </div>
+              <div class="info-group">
+                <h4>Payment Information</h4>
+                <p><strong>Status:</strong> {{ order.paymentStatus }}</p>
+                <p><strong>Currency:</strong> {{ order.currency }}</p>
+              </div>
+            </div>
+            <div class="order-items">
+              <h4>Order Items</h4>
+              <table class="items-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Image</th>
+                    <th>SKU</th>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Qty</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of order.orderItems; let i = index">
+                    <td>{{ i + 1 }}</td>
+                    <td>
+                      <img [src]="item.product?.images[0]?.imageUrl || 'assets/default-product.png'" 
+                           alt="Product image" 
+                           class="product-thumbnail">
+                    </td>
+                    <td>{{ item.productSku || item.product?.sku || 'N/A' }}</td>
+                    <td>{{ item.productName }}</td>
+                    <td>{{ item.unitPrice | currency:'VND':'symbol':'1.0-0' }}</td>
+                    <td>× {{ item.quantity }}</td>
+                    <td>{{ item.totalPrice | currency:'VND':'symbol':'1.0-0' }}</td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="6" class="text-right"><strong>Subtotal:</strong></td>
+                    <td>{{ order.subtotal | currency:'VND':'symbol':'1.0-0' }}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="6" class="text-right"><strong>Shipping:</strong></td>
+                    <td>{{ order.shippingAmount | currency:'VND':'symbol':'1.0-0' }}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="6" class="text-right"><strong>Tax:</strong></td>
+                    <td>{{ order.taxAmount | currency:'VND':'symbol':'1.0-0' }}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="6" class="text-right"><strong>Discount:</strong></td>
+                    <td>{{ order.discountAmount | currency:'VND':'symbol':'1.0-0' }}</td>
+                  </tr>
+                  <tr class="total-row">
+                    <td colspan="6" class="text-right"><strong>Total:</strong></td>
+                    <td>{{ order.totalAmount | currency:'VND':'symbol':'1.0-0' }}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </td>
+      </ng-container>
+
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      <tr mat-row *matRowDef="let order; columns: displayedColumns;"
+          class="order-row"
+          [class.expanded-row]="expandedOrder === order"
+          (click)="expandedOrder = expandedOrder === order ? null : order">
+      </tr>
+      <tr mat-row *matRowDef="let order; columns: ['expandedDetail']"
+          class="detail-row"
+          [@detailExpand]="order == expandedOrder ? 'expanded' : 'collapsed'">
+      </tr>
     </table>
 
-    <!-- Pagination -->
-    <div class="pagination-container">
-      <div class="pagination-info">
-        <span class="pagination-text">
-          <mat-icon>chevron_left</mat-icon>
-          Previous
-        </span>
-        <div class="page-numbers">
-          <span class="page-number active">1</span>
-          <span class="page-number">2</span>
-          <span class="page-number">10</span>
-          <span class="page-number">12</span>
-          <span class="page-number">13</span>
-          <span class="page-number">14</span>
-        </div>
-        <span class="pagination-text">
-          Next
-          <mat-icon>chevron_right</mat-icon>
-        </span>
-      </div>
-    </div>
+    <mat-paginator 
+      [length]="totalItems"
+      [pageSize]="pageSize"
+      [pageSizeOptions]="pageSizeOptions"
+      (page)="onPageChange($event)">
+    </mat-paginator>
   </div>
 </div>

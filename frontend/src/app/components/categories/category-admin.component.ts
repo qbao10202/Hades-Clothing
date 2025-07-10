@@ -7,6 +7,8 @@ import { Category } from '../../models';
 import { CategoryService } from '../../services/category.service';
 import { CategoryFormModalComponent } from './category-form-modal.component';
 import { DeleteConfirmationComponent } from '../shared/delete-confirmation.component';
+import { HttpErrorResponse } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-category-admin',
@@ -62,19 +64,54 @@ export class CategoryAdminComponent implements OnInit {
       }
     });
 
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed().subscribe(async result => {
       if (result) {
-        this.categoryService.createCategory(result).subscribe({
-          next: (newCategory) => {
-            this.categories = [newCategory, ...this.categories];
-            this.dataSource.data = this.categories;
-            this.snackBar.open('Category added successfully!', 'Close', { duration: 3000 });
-          },
-          error: (error) => {
-            console.error('Error creating category:', error);
-            this.snackBar.open('Error creating category', 'Close', { duration: 3000 });
-          }
-        });
+        let { categoryData, imageFile } = result;
+        if (imageFile) {
+          // We need to create the category first to get the ID
+          this.categoryService.createCategory(categoryData).subscribe({
+            next: async (newCategory) => {
+              try {
+                await this.categoryService.uploadCategoryImage(newCategory.id, imageFile).toPromise();
+                // Fetch updated category to get imageUrl
+                const updatedCategory = await this.categoryService.getCategory(newCategory.id).toPromise();
+                if (updatedCategory && updatedCategory.imageUrl) {
+                  categoryData.imageUrl = updatedCategory.imageUrl;
+                }
+                // Update the category with the imageUrl
+                this.categoryService.updateCategory(newCategory.id, categoryData).subscribe({
+                  next: () => {
+                    this.loadCategories();
+                    this.snackBar.open('Category added successfully!', 'Close', { duration: 3000 });
+                  },
+                  error: (error) => {
+                    console.error('Error updating category with image:', error);
+                    this.snackBar.open('Error updating category with image', 'Close', { duration: 3000 });
+                  }
+                });
+              } catch (error) {
+                console.error('Error uploading image:', error);
+                this.loadCategories();
+                this.snackBar.open('Category added (image not changed)', 'Close', { duration: 3000 });
+              }
+            },
+            error: (error) => {
+              console.error('Error creating category:', error);
+              this.snackBar.open('Error creating category', 'Close', { duration: 3000 });
+            }
+          });
+        } else {
+          this.categoryService.createCategory(categoryData).subscribe({
+            next: () => {
+              this.loadCategories();
+              this.snackBar.open('Category added successfully!', 'Close', { duration: 3000 });
+            },
+            error: (error) => {
+              console.error('Error creating category:', error);
+              this.snackBar.open('Error creating category', 'Close', { duration: 3000 });
+            }
+          });
+        }
       }
     });
   }
@@ -89,15 +126,30 @@ export class CategoryAdminComponent implements OnInit {
       }
     });
 
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed().subscribe(async result => {
       if (result) {
-        this.categoryService.updateCategory(category.id, result).subscribe({
-          next: (updatedCategory) => {
-            const index = this.categories.findIndex(c => c.id === category.id);
-            if (index !== -1) {
-              this.categories[index] = updatedCategory;
-              this.dataSource.data = this.categories;
+        let { categoryData, imageFile } = result;
+        // Preserve imageUrl if not changed
+        if (!imageFile && category.imageUrl) {
+          categoryData.imageUrl = category.imageUrl;
+        }
+        if (imageFile) {
+          // First upload the image, get the new imageUrl
+          try {
+            const uploadResp: any = await this.categoryService.uploadCategoryImage(category.id, imageFile).toPromise();
+            // The backend does not return the new imageUrl, so fetch the updated category
+            const updatedCategory = await this.categoryService.getCategory(category.id).toPromise();
+            if (updatedCategory && updatedCategory.imageUrl) {
+              categoryData.imageUrl = updatedCategory.imageUrl;
             }
+          } catch (error) {
+            console.error('Error uploading image:', error);
+            this.snackBar.open('Error uploading image', 'Close', { duration: 3000 });
+          }
+        }
+        this.categoryService.updateCategory(category.id, categoryData).subscribe({
+          next: () => {
+            this.loadCategories();
             this.snackBar.open('Category updated successfully!', 'Close', { duration: 3000 });
           },
           error: (error) => {
@@ -112,9 +164,10 @@ export class CategoryAdminComponent implements OnInit {
   deleteCategory(category: Category): void {
     const dialogRef = this.dialog.open(DeleteConfirmationComponent, {
       width: '400px',
-      data: { 
-        title: 'Delete Category', 
-        message: `Are you sure you want to delete "${category.name}"?` 
+      data: {
+        title: 'Delete Category',
+        message: `Are you sure you want to delete this category?`,
+        itemName: category.name
       }
     });
 
@@ -212,7 +265,11 @@ export class CategoryAdminComponent implements OnInit {
   getImageUrl(imageUrl: string): string {
     if (!imageUrl) return '';
     if (imageUrl.startsWith('http')) return imageUrl;
-    if (imageUrl.startsWith('/uploads')) return `http://localhost:8080${imageUrl}`;
-    return `http://localhost:8080/uploads/categories/${imageUrl}`;
+    if (imageUrl.startsWith('/uploads')) return `${this.getBackendBaseUrl()}${imageUrl}`;
+    return `${this.getBackendBaseUrl()}/uploads/categories/${imageUrl}`;
+  }
+
+  getBackendBaseUrl(): string {
+    return environment.apiUrl.replace(/\/api$/, '');
   }
 } 
