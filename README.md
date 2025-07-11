@@ -5,6 +5,7 @@ A full-stack sales management platform with a modern Angular frontend and robust
 ---
 
 ## Table of Contents
+
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
@@ -18,6 +19,7 @@ A full-stack sales management platform with a modern Angular frontend and robust
 ---
 
 ## Features
+
 - User authentication (JWT, registration, login, roles, permissions)
 - Product catalog with categories, images, and search
 - Cart and checkout
@@ -35,12 +37,15 @@ A full-stack sales management platform with a modern Angular frontend and robust
 ## Tech Stack
 
 **Frontend:**
+
 - Angular 17, Angular Material, NgRx, TailwindCSS, ngx-charts, ngx-toastr, etc.
 
 **Backend:**
+
 - Java 17, Spring Boot 3, Spring Security, Spring Data JPA, Spring Validation, Spring Cache, Spring Actuator, MapStruct, Lombok, JWT, Redis, MySQL, H2 (dev), Prometheus, Swagger/OpenAPI
 
 **DevOps:**
+
 - Docker, Docker Compose
 
 ---
@@ -69,6 +74,7 @@ A full-stack sales management platform with a modern Angular frontend and robust
 ### Development
 
 #### Prerequisites
+
 - Node.js (v18+), npm
 - Java 17+
 - Maven
@@ -76,18 +82,20 @@ A full-stack sales management platform with a modern Angular frontend and robust
 - Redis (optional, for caching)
 
 #### 1. Clone the repository
+
 ```bash
 git clone https://github.com/qbao10202/Hades-Clothing
 cd Hades Clothing
 ```
 
-
 ### Production (Docker)
 
 1. Build and run all services:
+
 ```bash
 docker-compose up --build
 ```
+
 - Frontend: http://localhost:4200
 - Backend: http://localhost:8080
 - MySQL: localhost:3307
@@ -95,7 +103,9 @@ docker-compose up --build
 ---
 
 ## Environment Variables
+
 See `env.example` for all available variables. Key ones:
+
 - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
 - `JWT_SECRET`, `JWT_EXPIRATION`
 - `REDIS_*`
@@ -104,8 +114,34 @@ See `env.example` for all available variables. Key ones:
 
 ---
 
+## 👥 Log in Account
 
+### User role
 
+- Please register a new account to experience shopping.
+
+### Admin role
+
+- **Username**: `admin`
+- **Password**: `123456`
+- **Role**: `ADMIN`
+
+## 📱 Features Overview
+
+### For Customers
+
+- Browse products by category
+- Search products by name
+- Add items to shopping cart
+- Place orders
+
+### For Administrators
+
+- Product management
+- Category management
+- Order management
+- User management
 
 ## License
-This project is licensed under the MIT License. 
+
+This project is licensed under the MIT License.
