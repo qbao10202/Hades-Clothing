@@ -92,6 +92,9 @@ public class AuthService {
             Role savedRole = roleRepository.save(newUserRole);
             user.addRole(savedRole);
         }
+        // Assign CUSTOMER role for cart access
+        Optional<Role> customerRole = roleRepository.findByName("CUSTOMER");
+        customerRole.ifPresent(user::addRole);
         
         // Save user
         User savedUser = userRepository.save(user);
