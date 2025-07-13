@@ -74,18 +74,22 @@ public class CartController {
 
     // Helper: get or create cart for user
     private Order getOrCreateCart(User user) {
+        String code = "CUST-" + user.getId();
         Customer customer = customerRepository.findByUserId(user.getId())
-            .orElseGet(() -> {
-                Customer newCustomer = new Customer();
-                newCustomer.setUserId(user.getId());
-                newCustomer.setEmail(user.getEmail());
-                newCustomer.setCustomerCode("CUST-" + user.getId());
-                newCustomer.setCountry("VN"); // default country
-                newCustomer.setCustomerType(Customer.CustomerType.INDIVIDUAL); // default type
-                newCustomer.setActive(true);
-                // Set other required fields with defaults if needed
-                return customerRepository.save(newCustomer);
-            });
+            .orElseGet(() ->
+                customerRepository.findByCustomerCode(code)
+                    .orElseGet(() -> {
+                        Customer newCustomer = new Customer();
+                        newCustomer.setUserId(user.getId());
+                        newCustomer.setEmail(user.getEmail());
+                        newCustomer.setCustomerCode(code);
+                        newCustomer.setCountry("VN"); // default country
+                        newCustomer.setCustomerType(Customer.CustomerType.INDIVIDUAL); // default type
+                        newCustomer.setActive(true);
+                        // Set other required fields with defaults if needed
+                        return customerRepository.save(newCustomer);
+                    })
+            );
 
         return orderRepository.findByUserIdAndStatus(user.getId(), Order.OrderStatus.CART)
             .orElseGet(() -> {
