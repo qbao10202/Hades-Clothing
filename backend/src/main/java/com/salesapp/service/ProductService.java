@@ -3,6 +3,8 @@ package com.salesapp.service;
 import com.salesapp.entity.Product;
 import com.salesapp.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.cache.annotation.Cacheable;
 import com.salesapp.dto.ProductDTO;
@@ -37,6 +39,24 @@ public class ProductService {
             if (product.getCategory() != null) product.getCategory().getId();
         });
         return filtered;
+    }
+    
+    public Page<Product> getAllProductsWithPagination(Pageable pageable) {
+        Page<Product> products = productRepository.findAllWithImagesPaged(pageable);
+        return products.map(product -> {
+            if (product.getImages() != null) product.getImages().size();
+            if (product.getCategory() != null) product.getCategory().getId();
+            return product;
+        });
+    }
+    
+    public Page<Product> searchProducts(String query, Pageable pageable) {
+        Page<Product> products = productRepository.searchProducts(query, pageable);
+        return products.map(product -> {
+            if (product.getImages() != null) product.getImages().size();
+            if (product.getCategory() != null) product.getCategory().getId();
+            return product;
+        });
     }
     
     public List<Product> getProductsByCategory(Long categoryId) {

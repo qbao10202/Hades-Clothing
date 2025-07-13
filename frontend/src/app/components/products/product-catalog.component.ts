@@ -663,8 +663,12 @@ export class ProductCatalogComponent implements OnInit, OnDestroy {
   }
 
   quickViewProduct(product: ProductDTO): void {
-    // Navigate to product detail page
-    this.router.navigate(['/products', product.id]);
+    this.dialog.open(AddToCartModalComponent, {
+      width: '600px',
+      maxWidth: '90vw',
+      data: { product },
+      panelClass: 'add-to-cart-modal-panel'
+    });
   }
 
   clearFilters(): void {

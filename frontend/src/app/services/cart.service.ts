@@ -91,13 +91,27 @@ export class CartService {
   // Update cart item quantity
   updateCartItem(itemId: number, quantity: number): Observable<Cart> {
     if (this.isLoggedIn()) {
-      return this.http.put<Cart>(`${this.apiUrl}/items/${itemId}`, { quantity }).pipe(
-        tap(cart => {
+      const item = this.getCart().items.find(i => i.id === itemId);
+      const price = item ? item.price : undefined;
+      console.log('Calling updateCartItem with:', { itemId, quantity, price, productId: item?.productId });
+      return this.http.put<any>(`${this.apiUrl}/items/${itemId}`, { quantity, price, productId: item?.productId }).pipe(
+        map(response => {
+          console.log('CartResponseDTO from backend:', response);
+          const cart: Cart = {
+            items: response?.items || [],
+            totalItems: response?.totalItems || 0,
+            subtotal: response?.subtotal || 0,
+            taxAmount: response?.taxAmount || 0,
+            shippingAmount: response?.shippingAmount || 0,
+            discountAmount: response?.discountAmount || 0,
+            totalAmount: response?.totalAmount || 0
+          };
           this.cartSubject.next(cart);
           this.showSuccessMessage('Cart updated successfully');
-          this.loadCart(); // Ensure cart is reloaded from backend
+          return cart;
         }),
         catchError(error => {
+          console.log('Error or unexpected response in updateCartItem:', error);
           this.showErrorMessage('Failed to update cart');
           throw error;
         })

@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { Category } from '../models';
+import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class CategoryService {
@@ -11,7 +12,24 @@ export class CategoryService {
   constructor(private http: HttpClient) {}
 
   getCategories(): Observable<Category[]> {
-    return this.http.get<Category[]>(this.apiUrl);
+    return this.http.get<Category[]>(`${this.apiUrl}/all`);
+  }
+
+  getCategoriesWithPagination(params: any = {}): Observable<any> {
+    const defaultParams = {
+      page: 0,
+      size: 10,
+      sortBy: 'name',
+      sortDir: 'asc',
+      ...params
+    };
+
+    // Filter out undefined values
+    const filteredParams = Object.entries(defaultParams)
+      .filter(([_, value]) => value !== undefined && value !== null && value !== '')
+      .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
+
+    return this.http.get<any>(this.apiUrl, { params: filteredParams });
   }
 
   getCategory(id: number): Observable<Category> {

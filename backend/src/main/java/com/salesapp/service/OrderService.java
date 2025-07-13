@@ -238,8 +238,17 @@ public class OrderService {
         System.out.println("Updating order " + orderId + " to status " + status);
         
         // Use findById with a direct database query to avoid lazy loading issues
-        Order order = orderRepository.findById(orderId)
-            .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+        // Load order with all associations for DTO
+        Order order = entityManager.createQuery(
+            "SELECT o FROM Order o " +
+            "LEFT JOIN FETCH o.customer " +
+            "LEFT JOIN FETCH o.orderItems oi " +
+            "LEFT JOIN FETCH oi.product p " +
+            "LEFT JOIN FETCH p.category " +
+            "LEFT JOIN FETCH p.images " +
+            "WHERE o.id = :id", Order.class)
+            .setParameter("id", orderId)
+            .getSingleResult();
 
         System.out.println("Current order status: " + order.getStatus());
         
@@ -255,15 +264,8 @@ public class OrderService {
             order.setUpdatedAt(LocalDateTime.now());
             Order savedOrder = orderRepository.save(order);
             System.out.println("Order status updated successfully to: " + savedOrder.getStatus());
-            
-            // Return only the necessary fields to avoid lazy loading issues
-            Order response = new Order();
-            response.setId(savedOrder.getId());
-            response.setOrderNumber(savedOrder.getOrderNumber());
-            response.setStatus(savedOrder.getStatus());
-            response.setUpdatedAt(savedOrder.getUpdatedAt());
-            
-            return response;
+            // Return the fully loaded order for DTO
+            return order;
         } catch (Exception e) {
             System.out.println("Error saving order: " + e.getMessage());
             e.printStackTrace();

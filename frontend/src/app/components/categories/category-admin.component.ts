@@ -1,8 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableDataSource } from '@angular/material/table';
+import { MatPaginator, PageEvent } from '@angular/material/paginator';
+import { MatSort } from '@angular/material/sort';
 import { SelectionModel } from '@angular/cdk/collections';
+import { FormControl } from '@angular/forms';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { Category } from '../../models';
 import { CategoryService } from '../../services/category.service';
 import { CategoryFormModalComponent } from './category-form-modal.component';
@@ -15,13 +19,22 @@ import { environment } from '../../../environments/environment';
   templateUrl: './category-admin.component.html',
   styleUrls: ['./category-admin.component.scss']
 })
-export class CategoryAdminComponent implements OnInit {
+export class CategoryAdminComponent implements OnInit, AfterViewInit {
   categories: Category[] = [];
   dataSource = new MatTableDataSource<Category>();
   selection = new SelectionModel<Category>(true, []);
   loading = false;
   displayedColumns: string[] = ['select', 'image', 'name', 'createdAt', 'actions'];
-  searchText = '';
+  searchControl = new FormControl('');
+
+  // Pagination
+  totalItems = 0;
+  pageSize = 10;
+  currentPage = 0;
+  pageSizeOptions = [5, 10, 25, 50];
+
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild(MatSort) sort!: MatSort;
 
   constructor(
     private categoryService: CategoryService,
@@ -31,16 +44,48 @@ export class CategoryAdminComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadCategories();
+    
+    // Setup search with debounce
+    this.searchControl.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged()
+      )
+      .subscribe(() => {
+        this.currentPage = 0;
+        this.loadCategories();
+      });
+  }
+
+  ngAfterViewInit() {
   }
 
   loadCategories(): void {
     this.loading = true;
-    this.categoryService.getCategories().subscribe({
-      next: (data) => {
-        this.categories = data;
-        this.dataSource.data = data;
-        this.applyFilter();
+    const params = {
+      page: this.currentPage,
+      size: this.pageSize,
+      sortBy: this.sort?.active || 'name',
+      sortDir: this.sort?.direction || 'asc',
+      search: this.searchControl.value || undefined
+    };
+
+    this.categoryService.getCategoriesWithPagination(params).subscribe({
+      next: (response) => {
+        if (response.content && Array.isArray(response.content)) {
+          this.categories = response.content;
+          this.totalItems = response.totalElements || response.content.length;
+        } else {
+          this.categories = response;
+          this.totalItems = response.length;
+        }
+        this.dataSource.data = this.categories;
         this.loading = false;
+        // If current page is not the first and no items, go back one page
+        if (this.currentPage > 0 && this.categories.length === 0) {
+          this.currentPage--;
+          this.loadCategories();
+        }
       },
       error: (error) => {
         console.error('Error loading categories:', error);
@@ -49,8 +94,24 @@ export class CategoryAdminComponent implements OnInit {
     });
   }
 
+  onPageChange(event: PageEvent): void {
+    // If pageSize changes, reset to first page
+    if (event.pageSize !== this.pageSize) {
+      this.currentPage = 0;
+    } else {
+      this.currentPage = event.pageIndex;
+    }
+    this.pageSize = event.pageSize;
+    this.loadCategories();
+  }
+
+  onSortChange(): void {
+    this.currentPage = 0;
+    this.loadCategories();
+  }
+
   applyFilter(): void {
-    const filterValue = this.searchText.trim().toLowerCase();
+    const filterValue = this.searchControl.value?.trim().toLowerCase() || '';
     this.dataSource.filter = filterValue;
   }
 

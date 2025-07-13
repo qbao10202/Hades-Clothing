@@ -124,10 +124,32 @@
         }
       }
       
+      
       // Row styling
-      .mat-row {
+      .mat-mdc-row {
         &:hover {
           background: #f9fafb;
+          .product-name {
+            color: #1f2937 !important;
+          }
+          .stock-value {
+            color: #1f2937 !important;
+          }
+          .price-value {
+            color: #1f2937 !important;
+          }
+          .category-cell .category-badge,
+          & .category-cell .category-badge {
+            color: #1f2937 !important;
+          }
+
+          .select-.mdc-checkbox .mdc-checkbox__native-control 
+           {
+            border-color: #1f2937 !important;
+          }
+          .mat-checkbox-frame {
+            border-color: #1f2937 !important;
+          }
         }
       }
       
@@ -156,14 +178,11 @@
           .product-details {
             .product-name {
               font-weight: 500;
-              color: #1f2937;
+              color: #f3f4f6;
               margin-bottom: 4px;
             }
             
-            .product-sku {
-              font-size: 0.75rem;
-              color: #6b7280;
-            }
+    
           }
         }
       }
@@ -171,8 +190,8 @@
       // Category column
       .category-cell {
         .category-badge {
-          background: #eff6ff;
-          color: #1d4ed8;
+          // background: #eff6ff;
+          color: #f3f4f6;
           padding: 4px 8px;
           border-radius: 4px;
           font-size: 0.75rem;
@@ -184,7 +203,7 @@
       .stock-cell {
         .stock-value {
           font-weight: 500;
-          color: #1f2937;
+          color: #f3f4f6;
         }
       }
       
@@ -192,7 +211,7 @@
       .price-cell {
         .price-value {
           font-weight: 600;
-          color: #1f2937;
+          color: #f3f4f6;
         }
       }
       
@@ -218,6 +237,31 @@
   }
 }
 
+.paginator-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 16px 0 0 0;
+  background: #232323;
+  border-radius: 0 0 16px 16px;
+  margin-top: -8px;
+}
+
+::ng-deep mat-paginator {
+  background: transparent !important;
+  color: #fff !important;
+  font-size: 1rem;
+}
+
+::ng-deep .mat-paginator-range-label,
+::ng-deep .mat-paginator-page-size-label {
+  color: #fff !important;
+}
+
+::ng-deep .mat-paginator-icon {
+  color: #fff !important;
+}
+
 // Responsive design
 @media (max-width: 768px) {
   .admin-page {
@@ -240,6 +284,8 @@
               height: 40px;
             }
           }
+
+
         }
       }
     }

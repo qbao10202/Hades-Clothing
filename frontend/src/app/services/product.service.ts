@@ -34,7 +34,25 @@ export class ProductService {
 
   // Get all products
   getProducts(): Observable<ProductDTO[]> {
-    return this.http.get<ProductDTO[]>(`${this.apiUrl}`);
+    return this.http.get<ProductDTO[]>(`${this.apiUrl}/all`);
+  }
+
+  // Get products with pagination
+  getProductsWithPagination(params: any = {}): Observable<any> {
+    const defaultParams = {
+      page: 0,
+      size: 10,
+      sortBy: 'name',
+      sortDir: 'asc',
+      ...params
+    };
+
+    // Filter out undefined values
+    const filteredParams = Object.entries(defaultParams)
+      .filter(([_, value]) => value !== undefined && value !== null && value !== '')
+      .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
+
+    return this.http.get<any>(this.apiUrl, { params: filteredParams });
   }
 
   // Get product by ID
@@ -74,7 +92,7 @@ export class ProductService {
 
   // Get all categories
   getCategories(): Observable<Category[]> {
-    return this.http.get<Category[]>(this.categoriesUrl);
+    return this.http.get<Category[]>(`${this.categoriesUrl}/all`);
   }
 
   // Load categories

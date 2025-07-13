@@ -155,11 +155,13 @@
       <ng-container matColumnDef="edit">
         <th mat-header-cell *matHeaderCellDef>Change Status</th>
         <td mat-cell *matCellDef="let order">
-          <mat-form-field appearance="outline" class="status-select">
+          <mat-form-field appearance="outline" class="status-select status-badge {{ getStatusClass(order.status) }}">
             <mat-select 
               [value]="order.status" 
               [disabled]="getAllowedStatusOptions(order.status).length <= 1"
-              (selectionChange)="onStatusChange($event, order)">
+              (selectionChange)="onStatusChange($event, order)"
+              panelClass="status-select-panel"
+            >
               <mat-option *ngFor="let status of getAllowedStatusOptions(order.status)" [value]="status.value">
                 {{ status.label }}
               </mat-option>

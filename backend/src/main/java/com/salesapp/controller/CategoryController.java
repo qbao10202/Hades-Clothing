@@ -6,6 +6,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,8 +32,33 @@ public class CategoryController {
     private CategoryRepository categoryRepository;
     
     @GetMapping
-    @Operation(summary = "Get all categories", description = "Retrieve all product categories")
-    public ResponseEntity<List<Category>> getAllCategories() {
+    @Operation(summary = "Get all categories", description = "Retrieve all product categories with pagination")
+    public ResponseEntity<Page<Category>> getAllCategories(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "name") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir,
+            @RequestParam(required = false) String search) {
+        
+        Sort sort = sortDir.equalsIgnoreCase("desc") ? 
+            Sort.by(sortBy).descending() : 
+            Sort.by(sortBy).ascending();
+        
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<Category> categories;
+        
+        if (search != null && !search.trim().isEmpty()) {
+            categories = categoryRepository.findByNameContainingIgnoreCase(search, pageable);
+        } else {
+            categories = categoryRepository.findAll(pageable);
+        }
+        
+        return ResponseEntity.ok(categories);
+    }
+    
+    @GetMapping("/all")
+    @Operation(summary = "Get all categories without pagination", description = "Retrieve all product categories as a list")
+    public ResponseEntity<List<Category>> getAllCategoriesList() {
         List<Category> categories = categoryRepository.findAll();
         return ResponseEntity.ok(categories);
     }

@@ -81,6 +81,7 @@ import { ConfirmDialogComponent } from './components/categories/confirm-dialog.c
 import { AddToCartModalComponent } from './components/shared/add-to-cart-modal.component';
 import { ProductCatalogComponent } from './components/products/product-catalog.component';
 import { DeleteConfirmationComponent } from './components/shared/delete-confirmation.component';
+import { RemoveCartItemDialogComponent } from './components/shared/remove-cart-item-dialog/remove-cart-item-dialog.component';
 
 // App Services
 import { AuthService } from './services/auth.service';
@@ -138,7 +139,8 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
     ConfirmDialogComponent,
     AddToCartModalComponent,
     ProductCatalogComponent,
-    DeleteConfirmationComponent
+    DeleteConfirmationComponent,
+    RemoveCartItemDialogComponent
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   imports: [

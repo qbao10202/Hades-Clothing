@@ -179,7 +179,7 @@ public class CartController {
 
     // PUT /api/cart/items/{itemId}
     @PutMapping("/items/{itemId}")
-    public ResponseEntity<Order> updateCartItem(@PathVariable Long itemId, @RequestBody CartItemDTO itemDto, Authentication authentication) {
+    public ResponseEntity<CartResponseDTO> updateCartItem(@PathVariable Long itemId, @RequestBody CartItemDTO itemDto, Authentication authentication) {
         String username = authentication.getName();
         User user = userRepository.findByUsername(username).orElseThrow();
         Order cart = getOrCreateCart(user);
@@ -200,19 +200,21 @@ public class CartController {
         item.setTotalPrice(item.getUnitPrice().multiply(BigDecimal.valueOf(itemDto.quantity)));
         cart.calculateTotals();
         orderRepository.save(cart);
-        return ResponseEntity.ok(cart);
+        CartResponseDTO response = convertToCartResponse(cart);
+        return ResponseEntity.ok(response);
     }
 
     // DELETE /api/cart/items/{itemId}
     @DeleteMapping("/items/{itemId}")
-    public ResponseEntity<Order> removeCartItem(@PathVariable Long itemId, Authentication authentication) {
+    public ResponseEntity<CartResponseDTO> removeCartItem(@PathVariable Long itemId, Authentication authentication) {
         String username = authentication.getName();
         User user = userRepository.findByUsername(username).orElseThrow();
         Order cart = getOrCreateCart(user);
         cart.getOrderItems().removeIf(i -> i.getId().equals(itemId));
         cart.calculateTotals();
         orderRepository.save(cart);
-        return ResponseEntity.ok(cart);
+        CartResponseDTO response = convertToCartResponse(cart);
+        return ResponseEntity.ok(response);
     }
 
     // DELETE /api/cart

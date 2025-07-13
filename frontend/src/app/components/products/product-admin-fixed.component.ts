@@ -179,7 +179,7 @@ export class ProductAdminComponent implements OnInit {
     const dialogRef = this.dialog.open(DeleteConfirmationComponent, {
       width: '400px',
       data: {
-        title: 'Xác nhận xóa sản phẩm',
+        title: 'Delete  product?',
         message: 'Điều này sẽ xóa vĩnh viễn các sản phẩm đã chọn khỏi kho của bạn.',
         itemName: selectedProducts.map((p: ProductDTO) => p.name).join(', ')
       }

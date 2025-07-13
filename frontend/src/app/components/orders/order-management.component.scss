@@ -343,19 +343,147 @@
   }
 
   // Status Select Styles
+  // Make Change Status dropdown match status badge size, color, and style
   .status-select {
-    min-width: 120px;
-    
+    min-width: 100px !important;
+    max-width: 140px !important;
+    height: 40px !important;
+    padding: 0 !important;
+    border-radius: 20px !important;
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    text-align: center !important;
+    .mat-mdc-form-field-flex {
+      padding: 0 !important;
+      min-height: 40px !important;
+      align-items: center !important;
+    }
     .mat-mdc-select {
-      &:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-      }
+      min-width: 0 !important;
+      padding: 0 !important;
+      height: 40px !important;
+      line-height: 40px !important;
+      font-size: inherit !important;
+      font-weight: inherit !important;
+      background: transparent !important;
+      color: inherit !important;
+      border-radius: 20px !important;
+      box-shadow: none !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
     }
-    
+    .mat-mdc-select-value {
+      color: #155724 !important;
+      font-weight: 600 !important;
+      font-size: inherit !important;
+      text-align: center !important;
+      width: 100%;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+    .mat-mdc-form-field-outline,
+    .mat-mdc-form-field-outline-thick,
+    .mat-mdc-form-field-outline-start,
+    .mat-mdc-form-field-outline-end,
+    .mat-mdc-form-field-outline-gap {
+      border: none !important;
+      outline: none !important;
+      box-shadow: none !important;
+      display: none !important;
+    }
     .mat-mdc-form-field-subscript-wrapper {
-      display: none; // Hide the underline space
+      display: none !important;
     }
+    &.mat-focused, &:focus-within, &:hover {
+      border: none !important;
+      outline: none !important;
+      box-shadow: none !important;
+    }
+  }
+  // Improve dropdown option contrast
+  ::ng-deep .mat-mdc-select-panel .mat-mdc-option {
+    color: #222 !important;
+    font-weight: 500;
+    background: #fff !important;
+  }
+  // Only affect the Change Status dropdown (status-select-panel)
+  ::ng-deep .status-select-panel .mat-mdc-option.mat-selected {
+    color: #fff !important;
+    background: #388e3c !important;
+  }
+  // Match Change Status dropdown background to status badge
+  .status-select.status-delivered {
+    background: #d4edda !important;
+    color: #155724 !important;
+  }
+  .status-select.status-confirmed {
+    background: #cce5ff !important;
+    color: #004085 !important;
+  }
+  .status-select.status-pending {
+    background: #fff3cd !important;
+    color: #856404 !important;
+  }
+  .status-select.status-processing {
+    background: #d4edda !important;
+    color: #155724 !important;
+  }
+  .status-select.status-shipped {
+    background: #e2e3ff !important;
+    color: #383d9b !important;
+  }
+  .status-select.status-cancelled {
+    background: #f8d7da !important;
+    color: #721c24 !important;
+  }
+  .status-select.status-refunded {
+    background: #e2e3e5 !important;
+    color: #383d41 !important;
+  }
+  .status-select.status-unknown {
+    background: #f8f9fa !important;
+    color: #6c757d !important;
+  }
+  .status-select.status-badge .mat-mdc-select-value {
+    text-transform: capitalize !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100%;
+    text-align: center !important;
+    font-weight: 700 !important;
+    font-size: 1rem !important;
+    letter-spacing: 0.03em;
+    min-height: 40px;
+    height: 40px;
+  }
+  // Force center and capitalize Change Status selected value
+  ::ng-deep .status-select.status-badge .mat-mdc-select-value,
+  ::ng-deep .status-select.status-badge .mat-mdc-select-value-text {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    text-transform: capitalize !important;
+    font-weight: 700 !important;
+    font-size: 1rem !important;
+    letter-spacing: 0.03em !important;
+    min-height: 40px !important;
+    height: 40px !important;
+  }
+  // Center the dropdown arrow
+  ::ng-deep .status-select.status-badge .mat-mdc-select-arrow {
+    align-self: center !important;
+    margin-top: 0 !important;
   }
 }
 

@@ -8,6 +8,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -34,8 +38,34 @@ public class ProductController {
     private ProductService productService;
     
     @GetMapping
-    @Operation(summary = "Get all products", description = "Retrieve all active products")
-    public ResponseEntity<List<ProductDTO>> getAllProducts() {
+    @Operation(summary = "Get all products", description = "Retrieve all active products with pagination")
+    public ResponseEntity<Page<ProductDTO>> getAllProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "name") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir,
+            @RequestParam(required = false) String search) {
+        
+        Sort sort = sortDir.equalsIgnoreCase("desc") ? 
+            Sort.by(sortBy).descending() : 
+            Sort.by(sortBy).ascending();
+        
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<Product> products;
+        
+        if (search != null && !search.trim().isEmpty()) {
+            products = productService.searchProducts(search, pageable);
+        } else {
+            products = productService.getAllProductsWithPagination(pageable);
+        }
+        
+        Page<ProductDTO> productDTOs = products.map(productService::toProductDTO);
+        return ResponseEntity.ok(productDTOs);
+    }
+    
+    @GetMapping("/all")
+    @Operation(summary = "Get all products without pagination", description = "Retrieve all active products as a list")
+    public ResponseEntity<List<ProductDTO>> getAllProductsList() {
         List<ProductDTO> products = productService.getAllProducts().stream()
             .map(productService::toProductDTO)
             .collect(Collectors.toList());

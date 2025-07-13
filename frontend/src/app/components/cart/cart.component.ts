@@ -2,6 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog } from '@angular/material/dialog';
+import { RemoveCartItemDialogComponent } from '../shared/remove-cart-item-dialog/remove-cart-item-dialog.component';
 
 import { Cart, CartItem, User } from '../../models';
 import { CartService } from '../../services/cart.service';
@@ -57,7 +59,7 @@ import { environment } from '../../../environments/environment';
             <div class="cart-summary">
               <div class="summary-card">
                 <div class="summary-line">
-                  <span>Order Amount:</span>
+                  <span>Subtotal:</span>
                   <span class="amount">{{ formatCurrency(cart.subtotal) }}</span>
                 </div>
                 <div class="summary-line">
@@ -512,7 +514,8 @@ export class CartComponent implements OnInit, OnDestroy {
     private cartService: CartService,
     private authService: AuthService,
     private router: Router,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -555,8 +558,14 @@ export class CartComponent implements OnInit, OnDestroy {
     }
   }
 
-  removeItem(item: CartItem): void {
-    if (confirm('Are you sure you want to remove this item from your cart?')) {
+  async removeItem(item: CartItem): Promise<void> {
+    const dialogRef = this.dialog.open(RemoveCartItemDialogComponent, {
+      width: '350px',
+      autoFocus: false,
+      panelClass: 'remove-cart-item-dialog-panel'
+    });
+    const confirmed = await dialogRef.afterClosed().toPromise();
+    if (confirmed) {
       this.cartService.removeFromCart(item.id).subscribe({
         next: () => {
           this.snackBar.open('Item removed from cart', 'Close', { duration: 2000 });

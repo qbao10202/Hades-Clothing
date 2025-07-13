@@ -16,12 +16,12 @@
         
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
           <div class="form-group">
-            <label for="username">Email address</label>
+            <label for="username">User name</label>
             <input
               type="text"
               id="username"
               formControlName="username"
-              placeholder="farhanpaozar@gmail.com"
+              placeholder="farhanpaozar"
               class="form-control"
               [class.error]="loginForm.get('username')?.invalid && loginForm.get('username')?.touched"
             />

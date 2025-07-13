@@ -51,6 +51,21 @@ export class OrderService {
       ...params
     };
 
+    // Map searchControl/query to 'search' for backend compatibility
+    if (defaultParams.searchControl) {
+      defaultParams.search = defaultParams.searchControl;
+      delete defaultParams.searchControl;
+    }
+    if (defaultParams.query) {
+      defaultParams.search = defaultParams.query;
+      delete defaultParams.query;
+    }
+
+    // Fix: Map customerName to customer.contactPerson for backend compatibility
+    if (defaultParams.sortBy === 'customerName') {
+      defaultParams.sortBy = 'customer.contactPerson';
+    }
+
     // Filter out undefined values
     const filteredParams = Object.entries(defaultParams)
       .filter(([_, value]) => value !== undefined && value !== null && value !== '')
@@ -87,7 +102,36 @@ export class OrderService {
   }
 
   updateOrderStatus(id: number, status: string): Observable<Order> {
-    return this.http.put<Order>(`${this.apiUrl}/${id}/status?status=${status}`, null);
+    // Use the endpoint that returns a full OrderResponseDTO
+    return this.http.put<any>(`${this.apiUrl}/${id}/status?status=${status}`, null).pipe(
+      map((response: any) => {
+        // If the response is a DTO, map it to the Order model
+        if (response && response.orderItems) {
+          return {
+            ...response,
+            orderItems: response.orderItems,
+            customerName: response.customerName,
+            customerEmail: response.customerEmail,
+            customerPhone: response.customerPhone,
+            shippingAddress: response.shippingAddress,
+            shippingMethod: response.shippingMethod,
+            shippingStatus: response.shippingStatus,
+            paymentStatus: response.paymentStatus,
+            subtotal: response.subtotal,
+            taxAmount: response.taxAmount,
+            shippingAmount: response.shippingAmount,
+            discountAmount: response.discountAmount,
+            totalAmount: response.totalAmount,
+            currency: response.currency,
+            trackingNumber: response.trackingNumber,
+            notes: response.notes,
+            createdAt: response.createdAt,
+            updatedAt: response.updatedAt
+          };
+        }
+        return response;
+      })
+    );
   }
 
   updatePaymentStatus(id: number, paymentStatus: string): Observable<Order> {

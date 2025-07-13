@@ -1,8 +1,11 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
-import { MatPaginator } from '@angular/material/paginator';
+import { MatPaginator, PageEvent } from '@angular/material/paginator';
+import { MatSort } from '@angular/material/sort';
 import { MatDialog } from '@angular/material/dialog';
 import { SelectionModel } from '@angular/cdk/collections';
+import { FormControl } from '@angular/forms';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ProductService } from '../../services/product.service';
 import { ProductDTO, Category } from '../../models';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -15,16 +18,23 @@ import { environment } from '../../../environments/environment';
   templateUrl: './product-admin.component.html',
   styleUrls: ['./product-admin.component.scss']
 })
-export class ProductAdminComponent implements OnInit {
+export class ProductAdminComponent implements OnInit, AfterViewInit {
   displayedColumns: string[] = ['select', 'product', 'category', 'stock', 'price', 'actions'];
   dataSource = new MatTableDataSource<ProductDTO>();
   selection = new SelectionModel<ProductDTO>(true, []);
   categories: Category[] = [];
   filterCategory: number | null = null;
-  searchText = '';
+  searchControl = new FormControl('');
   errorMessage: string = '';
 
+  // Pagination
+  totalItems = 0;
+  pageSize = 10;
+  currentPage = 0;
+  pageSizeOptions = [5, 10, 25, 50];
+
   @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild(MatSort) sort!: MatSort;
 
   constructor(
     private productService: ProductService,
@@ -34,12 +44,30 @@ export class ProductAdminComponent implements OnInit {
 
   ngOnInit() {
     this.loadCategories();
-    this.loadProducts();
+    
+    // Setup search with debounce
+    this.searchControl.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged()
+      )
+      .subscribe(() => {
+        this.currentPage = 0;
+        this.loadProducts();
+      });
+  }
+
+  ngAfterViewInit() {
   }
 
   loadCategories() {
     this.productService.getCategories().subscribe({
-      next: (cats: Category[]) => this.categories = cats,
+      next: (cats: Category[]) => {
+        this.categories = cats;
+        console.log('Loaded categories:', this.categories);
+        (window as any).categories = cats; // Make categories available in browser console
+        this.loadProducts(); // Load products only after categories are loaded
+      },
       error: (err: any) => {
         this.errorMessage = 'Không thể tải danh mục sản phẩm.';
         this.snackBar.open(this.errorMessage, 'Đóng', { duration: 4000 });
@@ -48,18 +76,39 @@ export class ProductAdminComponent implements OnInit {
   }
 
   loadProducts() {
-    this.productService.getProducts().subscribe({
-      next: (products: ProductDTO[]) => {
-        let filtered = products;
+    const params = {
+      page: this.currentPage,
+      size: this.pageSize,
+      sortBy: this.sort?.active || 'name',
+      sortDir: this.sort?.direction || 'asc',
+      search: this.searchControl.value || undefined
+    };
+
+    this.productService.getProductsWithPagination(params).subscribe({
+      next: (response: any) => {
+        let products: ProductDTO[] = [];
+        
+        if (response.content && Array.isArray(response.content)) {
+          products = response.content;
+          this.totalItems = response.totalElements || response.content.length;
+        } else {
+          products = response;
+          this.totalItems = response.length;
+        }
+        console.log('Loaded products:', products);
+
+        // Apply category filter if set
         if (this.filterCategory) {
-          filtered = filtered.filter(p => p.categoryId === this.filterCategory);
+          products = products.filter(p => p.categoryId == this.filterCategory);
         }
-        if (this.searchText) {
-          filtered = filtered.filter(p => p.name.toLowerCase().includes(this.searchText.toLowerCase()));
-        }
-        this.dataSource.data = filtered;
-        this.dataSource.paginator = this.paginator;
+
+        this.dataSource.data = products;
         this.errorMessage = '';
+        // If current page is not the first and no items, go back one page
+        if (this.currentPage > 0 && products.length === 0) {
+          this.currentPage--;
+          this.loadProducts();
+        }
       },
       error: (err: any) => {
         this.errorMessage = 'Không thể tải sản phẩm.';
@@ -68,18 +117,37 @@ export class ProductAdminComponent implements OnInit {
     });
   }
 
+  onPageChange(event: PageEvent): void {
+    // If pageSize changes, reset to first page
+    if (event.pageSize !== this.pageSize) {
+      this.currentPage = 0;
+    } else {
+      this.currentPage = event.pageIndex;
+    }
+    this.pageSize = event.pageSize;
+    this.loadProducts();
+  }
+
+  onSortChange(): void {
+    this.currentPage = 0;
+    this.loadProducts();
+  }
+
   applyFilter() {
+    this.currentPage = 0;
     this.loadProducts();
   }
 
   filterByCategory(categoryId: number | null) {
     this.filterCategory = categoryId;
+    this.currentPage = 0;
     this.loadProducts();
   }
 
   clearFilter() {
     this.filterCategory = null;
-    this.searchText = '';
+    this.searchControl.setValue('');
+    this.currentPage = 0;
     this.loadProducts();
   }
 
@@ -149,8 +217,8 @@ export class ProductAdminComponent implements OnInit {
     const dialogRef = this.dialog.open(DeleteConfirmationComponent, {
       width: '400px',
       data: {
-        title: 'Xác nhận xóa sản phẩm',
-        message: 'Bạn có chắc chắn muốn xóa sản phẩm này?',
+        title: 'Delete product?',
+        message: 'Are you confirm to delete this product?',
         itemName: product.name
       }
     });
@@ -233,7 +301,12 @@ export class ProductAdminComponent implements OnInit {
   }
 
   getCategoryName(categoryId: number): string {
-    const cat = this.categories.find((c: Category) => c.id === categoryId);
+    // Support both paginated and flat array responses
+    const cats = Array.isArray((this.categories as any).content)
+      ? (this.categories as any).content
+      : this.categories;
+    if (!categoryId || !Array.isArray(cats)) return '';
+    const cat = cats.find((c: Category) => c.id == categoryId);
     return cat ? cat.name : '';
   }
 

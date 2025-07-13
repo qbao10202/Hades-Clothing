@@ -323,6 +323,10 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
         if (index !== -1) {
           this.dataSource.data[index] = updatedOrder;
           this.dataSource._updateChangeSubscription(); // Force refresh
+          // Fix: reassign expandedOrder to the updated object from dataSource
+          if (this.expandedOrder && this.expandedOrder.id === updatedOrder.id) {
+            this.expandedOrder = this.dataSource.data[index];
+          }
           this.snackBar.open(`Order status updated to ${newStatus}`, 'Close', { 
             duration: 3000,
             panelClass: ['success-snackbar']

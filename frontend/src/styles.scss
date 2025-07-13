@@ -574,3 +574,42 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
   -webkit-font-feature-settings: 'liga';
   -webkit-font-smoothing: antialiased;
 }
+
+// Force Change Status dropdown selected color (global override)
+::ng-deep .status-select-panel .mat-mdc-option.mat-selected {
+  color: #fff !important;
+  background: #388e3c !important;
+}
+
+// Force Change Status dropdown selected color (text and background, high specificity)
+::ng-deep .status-select-panel .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) .mdc-list-item__primary-text {
+  color: #fff !important;
+}
+::ng-deep .status-select-panel .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+  background: #388e3c !important;
+}
+// Make the checked pseudo-checkbox white in the status dropdown
+::ng-deep .status-select-panel .mat-pseudo-checkbox-checked.mat-pseudo-checkbox-minimal {
+  background: #fff !important;
+  border-color: #fff !important;
+}
+
+// GLOBAL OVERRIDES for Angular Material dropdown overlays
+// These affect ALL mat-select and mat-paginator overlays
+::ng-deep .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) .mdc-list-item__primary-text {
+  color: #fff !important;
+}
+::ng-deep .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+  background: #388e3c !important;
+}
+::ng-deep .mat-pseudo-checkbox-checked.mat-pseudo-checkbox-minimal {
+  background: #fff !important;
+  border-color: #fff !important;
+}
+
+.remove-cart-item-dialog-panel {
+  border-radius: 18px !important;
+  box-shadow: 0 8px 32px rgba(31,41,55,0.18) !important;
+  max-width: 95vw !important;
+  padding: 0 !important;
+}

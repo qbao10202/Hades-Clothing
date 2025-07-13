@@ -42,15 +42,20 @@ public class OrderController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir) {
+            @RequestParam(defaultValue = "desc") String sortDir,
+            @RequestParam(required = false) String search) {
         
         Sort sort = sortDir.equalsIgnoreCase("desc") ? 
             Sort.by(sortBy).descending() : 
             Sort.by(sortBy).ascending();
         
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<Order> orders = orderService.getAllOrdersWithDetails(pageable);
-        
+        Page<Order> orders;
+        if (search != null && !search.trim().isEmpty()) {
+            orders = orderService.searchOrders(search, pageable);
+        } else {
+            orders = orderService.getAllOrdersWithDetails(pageable);
+        }
         return ResponseEntity.ok(orders.map(OrderResponseDTO::fromEntity));
     }
     
