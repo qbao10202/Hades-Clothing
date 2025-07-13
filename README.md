@@ -23,8 +23,10 @@ A full-stack sales management platform with a modern Angular frontend and robust
 - User authentication (JWT, registration, login, roles, permissions)
 - Product catalog with categories, images, and search
 - Cart and checkout
-- Order management (admin and user)
-- Customer management
+- Order management (admin)
+- Product management (admin)
+- Category management (admin)
+- Search, filter, pagination page support
 - Dashboard with analytics and charts
 - File/image upload (local storage)
 - Caching (simple/Redis)
@@ -140,7 +142,6 @@ See `env.example` for all available variables. Key ones:
 - Product management
 - Category management
 - Order management
-- User management
 
 ## License
 
