@@ -72,7 +72,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   goToCatalog(): void {
-    this.router.navigate(['/catalog']);
+    this.router.navigate(['/products']);
   }
 
   viewCategory(category: CategoryCard): void {

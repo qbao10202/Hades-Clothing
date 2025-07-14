@@ -1,25 +1,33 @@
 <div class="category-admin">
-  <div class="admin-header">
-    <div class="header-content">
-      <h1 class="page-title">Categories</h1>
-      <div class="header-actions">
-        <div class="search-box">
-          <mat-icon class="search-icon">search</mat-icon>
-          <input 
-            type="text" 
-            placeholder="Search categories..." 
-            [formControl]="searchControl"
-            class="search-input"
-          >
-        </div>
-        <button mat-raised-button color="primary" (click)="addCategory()" class="add-btn">
-          <mat-icon>add</mat-icon>
-          Add Category
-        </button>
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <span class="breadcrumb-item">Dashboard</span>
+    <mat-icon class="breadcrumb-separator">chevron_right</mat-icon>
+    <span class="breadcrumb-item current">Categories</span>
+  </div>
+  <!-- Page Title -->
+  <h1 class="page-title">Categories</h1>
+  <!-- Action Bar -->
+  <div class="action-bar">
+    <div class="search-section">
+      <div class="search-box">
+        <mat-icon class="search-icon">search</mat-icon>
+        <input 
+          type="text" 
+          placeholder="Search categories..." 
+          [formControl]="searchControl"
+          class="search-input"
+        >
       </div>
     </div>
+    <div class="actions">
+      <button mat-raised-button color="primary" (click)="addCategory()" class="add-btn">
+        <mat-icon>add</mat-icon>
+        Add Category
+      </button>
+    </div>
   </div>
-
+  <!-- Table and rest of content remain unchanged -->
   <div class="admin-content">
     <div class="table-container">
       <table mat-table [dataSource]="dataSource" matSort (matSortChange)="onSortChange()" class="modern-table">
@@ -79,7 +87,7 @@
               <button class="edit_btn" mat-icon-button color="white" (click)="editCategory(category); $event.stopPropagation()" title="Edit">
                 <mat-icon>edit</mat-icon>
               </button>
-              <button mat-icon-button color="warn" (click)="deleteCategory(category); $event.stopPropagation()" title="Delete">
+              <button class="delete_btn" mat-icon-button color="white" (click)="deleteCategory(category); $event.stopPropagation()" title="Delete">
                 <mat-icon>delete</mat-icon>
               </button>
             </div>

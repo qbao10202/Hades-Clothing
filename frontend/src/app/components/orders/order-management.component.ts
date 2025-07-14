@@ -49,7 +49,8 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
     totalOrders: 0,
     newOrders: 0,
     completedOrders: 0,
-    cancelledOrders: 0
+    cancelledOrders: 0,
+    totalSales: 0
   };
 
   // Pagination
@@ -168,16 +169,21 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
         }
 
         // Filter out CART status orders and orders with orderNumber starting with CART
-        const filteredOrders = orders.filter(order => {
-          if (!order.orderNumber) {
-            console.log('Order missing orderNumber:', order);
-            return false;
-          }
+        const statusOrder = ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'REFUNDED', 'CANCELLED'];
+        let filteredOrders = orders.filter(order => {
+          if (!order.orderNumber) return false;
           const isValid = order.status !== ('CART' as OrderStatus) && !order.orderNumber.startsWith('CART');
-          if (!isValid) {
-            console.log('Filtered out order:', order);
-          }
           return isValid;
+        });
+        // Apply status filter if set
+        if (this.filters.status) {
+          filteredOrders = filteredOrders.filter(o => o.status === this.filters.status);
+        }
+        // Sort by logical status order
+        filteredOrders.sort((a, b) => {
+          const aIdx = statusOrder.indexOf(a.status);
+          const bIdx = statusOrder.indexOf(b.status);
+          return aIdx - bIdx;
         });
 
         console.log('Filtered orders:', filteredOrders);
@@ -188,15 +194,7 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
 
         this.dataSource.data = filteredOrders;
         
-        // Update stats based on filtered orders
-        this.stats = {
-          totalOrders: filteredOrders.length,
-          newOrders: filteredOrders.filter(o => o.status === 'PENDING').length,
-          completedOrders: filteredOrders.filter(o => o.status === 'DELIVERED').length,
-          cancelledOrders: filteredOrders.filter(o => o.status === 'CANCELLED').length
-        };
-
-        console.log('Updated stats:', this.stats);
+        // (REMOVED: Do not update this.stats here, only in loadStats)
       },
       error: (error) => {
         console.error('Error loading orders:', error);
@@ -216,11 +214,13 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
   loadStats(): void {
     this.orderService.getOrderStatistics(this.filters.fromDate, this.filters.toDate).subscribe({
       next: (stats) => {
+        const statusCounts = stats.statusCounts || {};
         this.stats = {
           totalOrders: stats.totalOrders || 0,
-          newOrders: stats.newOrders || 0,
-          completedOrders: stats.completedOrders || 0,
-          cancelledOrders: stats.cancelledOrders || 0
+          newOrders: statusCounts['PENDING'] || 0,
+          cancelledOrders: statusCounts['CANCELLED'] || 0,
+          completedOrders: (statusCounts['DELIVERED'] || 0) + (statusCounts['REFUNDED'] || 0) + (statusCounts['CANCELLED'] || 0),
+          totalSales: stats.totalSales || 0
         };
       },
       error: (error) => {
@@ -332,6 +332,8 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
             panelClass: ['success-snackbar']
           });
         }
+        // Refresh statistics after status update
+        this.loadStats();
       },
       error: (error) => {
         console.error('Error updating order status:', error);
@@ -367,7 +369,8 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
       totalOrders: 0,
       newOrders: 0,
       completedOrders: 0,
-      cancelledOrders: 0
+      cancelledOrders: 0,
+      totalSales: 0
     };
   }
 }
