@@ -87,14 +87,14 @@
       <div class="date-range">
         <mat-form-field appearance="outline" class="date-field">
           <mat-label>From</mat-label>
-          <input matInput [matDatepicker]="fromPicker" [(ngModel)]="filters.fromDate" (dateChange)="applyFilters()">
+          <input matInput [matDatepicker]="fromPicker" [(ngModel)]="filters.fromDate" (dateChange)="applyFilters()" readonly>
           <mat-datepicker-toggle matSuffix [for]="fromPicker"></mat-datepicker-toggle>
           <mat-datepicker #fromPicker></mat-datepicker>
         </mat-form-field>
         
         <mat-form-field appearance="outline" class="date-field">
           <mat-label>To</mat-label>
-          <input matInput [matDatepicker]="toPicker" [(ngModel)]="filters.toDate" (dateChange)="applyFilters()">
+          <input matInput [matDatepicker]="toPicker" [(ngModel)]="filters.toDate" (dateChange)="applyFilters()" readonly>
           <mat-datepicker-toggle matSuffix [for]="toPicker"></mat-datepicker-toggle>
           <mat-datepicker #toPicker></mat-datepicker>
         </mat-form-field>

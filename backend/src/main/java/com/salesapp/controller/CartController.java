@@ -239,16 +239,20 @@ public class CartController {
         try {
             String username = authentication.getName();
             User user = userRepository.findByUsername(username).orElseThrow();
-            
-            // Create or update customer information
-            Customer customer = customerRepository.findByUserId(user.getId()).orElseGet(() -> {
-                Customer newCustomer = new Customer();
-                newCustomer.setUserId(user.getId());
-                newCustomer.setCustomerCode("CUST-" + user.getId());
-                newCustomer.setActive(true);
-                return newCustomer;
-            });
-            
+            String customerCode = "CUST-" + user.getId();
+
+            // Try to find customer by userId, then by customerCode, else create new
+            Customer customer = customerRepository.findByUserId(user.getId())
+                .orElseGet(() -> customerRepository.findByCustomerCode(customerCode)
+                    .orElseGet(() -> {
+                        Customer newCustomer = new Customer();
+                        newCustomer.setUserId(user.getId());
+                        newCustomer.setCustomerCode(customerCode);
+                        newCustomer.setActive(true);
+                        return newCustomer;
+                    })
+                );
+
             // Update customer information from checkout data
             customer.setEmail(checkoutDto.customerEmail);
             customer.setContactPerson(checkoutDto.customerName);
@@ -256,7 +260,7 @@ public class CartController {
             customer.setCustomerType(Customer.CustomerType.INDIVIDUAL);
             customer.setCountry("Vietnam");
             customer = customerRepository.save(customer);
-            
+
             // Create new order
             Order order = new Order();
             order.setUser(user);
@@ -268,7 +272,7 @@ public class CartController {
             order.setBillingAddress(checkoutDto.billingAddress);
             order.setShippingMethod(checkoutDto.shippingMethod);
             order.setNotes(checkoutDto.notes);
-            
+
             // Add order items
             List<OrderItem> orderItems = checkoutDto.items.stream().map(itemDto -> {
                 OrderItem item = new OrderItem();
@@ -281,19 +285,19 @@ public class CartController {
                 item.setOrder(order);
                 return item;
             }).collect(Collectors.toList());
-            
+
             order.setOrderItems(orderItems);
             order.calculateTotals();
-            
+
             // Process the order
             Order processedOrder = orderService.createOrder(order);
-            
+
             // Clear the cart after successful checkout
             Order cart = getOrCreateCart(user);
             cart.getOrderItems().clear();
             cart.calculateTotals();
             orderRepository.save(cart);
-            
+
             return ResponseEntity.ok(processedOrder);
         } catch (Exception e) {
             e.printStackTrace();

@@ -148,22 +148,49 @@
       display: flex;
       gap: 16px;
       align-items: center;
-      
+      flex-wrap: wrap; // allow wrapping on small screens
+
       .date-range {
         display: flex;
         gap: 8px;
-        
+        min-width: 320px; // ensure both date pickers fit side by side
+
         .date-field {
-          width: 140px;
+          width: 180px; // increase width for better visibility
+          min-width: 140px;
         }
       }
-      
+
       .status-filter {
         width: 140px;
+        min-width: 120px;
       }
-      
+
       .filter-btn {
         color: #666;
+      }
+    }
+
+    // Responsive: stack filters vertically on small screens
+    @media (max-width: 600px) {
+      .action-bar {
+        flex-direction: column;
+        align-items: stretch;
+
+        .actions {
+          flex-direction: column;
+          align-items: stretch;
+
+          .date-range {
+            flex-direction: column;
+            min-width: 0;
+            gap: 4px;
+
+            .date-field {
+              width: 100%;
+            }
+          }
+        }
       }
     }
   }
@@ -355,9 +382,10 @@
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    background: transparent !important;
+    background: #fff !important; // Use white background for visibility
+    color: #222 !important; // Use dark text for visibility
     box-shadow: none !important;
-    border: none !important;
+    border: 1px solid #e0e0e0 !important;
     text-align: center !important;
     .mat-mdc-form-field-flex {
       padding: 0 !important;
@@ -380,7 +408,7 @@
       justify-content: center !important;
     }
     .mat-mdc-select-value {
-      color: #155724 !important;
+      color: #222 !important;
       font-weight: 600 !important;
       font-size: inherit !important;
       text-align: center !important;
@@ -797,3 +825,144 @@
     }
   }
 }
+
+// Improve date picker and status filter visibility in filter bar
+::ng-deep .action-bar .mat-mdc-form-field {
+  font-size: 1.1rem !important;
+  background: #fff !important;
+  border-radius: 8px !important;
+}
+::ng-deep .action-bar .mat-mdc-form-field-infix,
+::ng-deep .action-bar .mat-mdc-input-element,
+::ng-deep .action-bar .mat-mdc-select-value,
+::ng-deep .action-bar .mat-mdc-floating-label,
+::ng-deep .action-bar .mat-mdc-form-field-label {
+  color: #222 !important;
+  background: transparent !important;
+}
+::ng-deep .action-bar .mat-mdc-form-field .mat-mdc-form-field-outline,
+::ng-deep .action-bar .mat-mdc-form-field .mat-mdc-form-field-outline-thick,
+::ng-deep .action-bar .mat-mdc-form-field .mat-mdc-form-field-outline-start,
+::ng-deep .action-bar .mat-mdc-form-field .mat-mdc-form-field-outline-end,
+::ng-deep .action-bar .mat-mdc-form-field .mat-mdc-form-field-outline-gap {
+  border-color: #bdbdbd !important;
+}
+::ng-deep .action-bar .mat-mdc-form-field.mat-focused .mat-mdc-form-field-outline-thick {
+  border-color: #495057 !important;
+}
+
+// Improve date picker input field appearance
+::ng-deep .date-field.mat-mdc-form-field {
+  border-radius: 10px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
+  background: #fff !important;
+  border: 1.5px solid #bdbdbd !important;
+  transition: border-color 0.2s;
+}
+::ng-deep .date-field.mat-mdc-form-field.mat-focused .mat-mdc-form-field-outline-thick {
+  border-color: #495057 !important;
+}
+::ng-deep .date-field .mat-mdc-form-field-outline,
+::ng-deep .date-field .mat-mdc-form-field-outline-thick,
+::ng-deep .date-field .mat-mdc-form-field-outline-start,
+::ng-deep .date-field .mat-mdc-form-field-outline-end,
+::ng-deep .date-field .mat-mdc-form-field-outline-gap {
+  border-radius: 10px !important;
+  border-color: #bdbdbd !important;
+}
+::ng-deep .date-field .mat-mdc-form-field-infix,
+::ng-deep .date-field .mat-mdc-input-element,
+::ng-deep .date-field .mat-mdc-floating-label,
+::ng-deep .date-field .mat-mdc-form-field-label {
+  color: #222 !important;
+  font-size: 1.08rem !important;
+  background: transparent !important;
+}
+
+// Make date picker input fields shorter and more compact
+::ng-deep .date-field.mat-mdc-form-field {
+  height: 40px !important;
+  min-height: 40px !important;
+}
+::ng-deep .date-field .mat-mdc-form-field-flex {
+  min-height: 40px !important;
+  height: 40px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+::ng-deep .date-field .mat-mdc-input-element {
+  line-height: 40px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  height: 40px !important;
+}
+::ng-deep .date-field .mat-mdc-form-field-infix {
+  min-height: 40px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+
+:host ::ng-deep .mat-mdc-select-panel .mat-mdc-option.mat-mdc-selected {
+  color: #ffc107 !important;
+  font-weight: 600;
+}
+ 
+::ng-deep .status-select-panel .mat-mdc-option.mat-mdc-selected {
+  color: #ffc107 !important;
+  font-weight: 600;
+}
+ 
+::ng-deep .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) .mdc-list-item__primary-text {
+  color: #ffc107 !important;
+}
+ 
+::ng-deep .status-select-panel .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) .mdc-list-item__primary-text {
+  color: #ffc107 !important; // Đổi thành màu bạn muốn
+  font-weight: bold;
+}
+.status-select-panel {
+  --mat-option-selected-state-label-text-color: #ffc107 !important;
+}
+ 
+::ng-deep .no-outline .mdc-notched-outline {
+  border: none !important;
+}
+ 
+::ng-deep .no-outline .mdc-notched-outline__leading,
+::ng-deep .no-outline .mdc-notched-outline__notch,
+::ng-deep .no-outline .mdc-notched-outline__trailing {
+  border: none !important;
+}
+ 
+// Style the mat-datepicker popup and calendar to be black with white text
+::ng-deep .mat-datepicker-content,
+::ng-deep .mat-mdc-datepicker-content,
+::ng-deep .mat-calendar,
+::ng-deep .mat-mdc-calendar {
+  background: #111 !important;
+  color: #fff !important;
+}
+::ng-deep .mat-calendar-table,
+::ng-deep .mat-mdc-calendar-table {
+  background: #111 !important;
+  color: #fff !important;
+}
+::ng-deep .mat-calendar-body-cell-content,
+::ng-deep .mat-mdc-calendar-body-cell-content {
+  color: #fff !important;
+}
+::ng-deep .mat-calendar-body-selected,
+::ng-deep .mat-mdc-calendar-body-selected {
+  background: #ffc107 !important;
+  color: #111 !important;
+}
+::ng-deep .mat-calendar-body-today,
+::ng-deep .mat-mdc-calendar-body-today {
+  border-color: #ffc107 !important;
+}
+::ng-deep .mat-calendar-arrow,
+::ng-deep .mat-mdc-calendar-arrow {
+  color: #fff !important;
+}
+ 

@@ -114,19 +114,11 @@
         tr.mat-row:hover {
           background: #f8f9fa;
 
-          .date {
-              color: #080808;
-          }
-
-          .edit_btn {
-            color:#080808;
-          }
-
-          .delete_btn {
-            color: #080808;
-          }
-          .name{
-            color: #080808;
+          td .date,
+          td .edit_btn,
+          td .delete_btn,
+          td .name {
+            color: #080808 !important;
           }
         }
 
@@ -402,4 +394,17 @@
 
 ::ng-deep .mat-checkbox-indeterminate .mat-checkbox-background {
   background-color: #667eea !important;
+} 
+
+::ng-deep tr.mat-row:hover .name,
+::ng-deep tr.mat-row:hover .date,
+::ng-deep tr.mat-row:hover .edit_btn,
+::ng-deep tr.mat-row:hover .delete_btn,
+::ng-deep tr.mat-row:hover mat-icon,
+::ng-deep tr.mat-mdc-row:hover .name,
+::ng-deep tr.mat-mdc-row:hover .date,
+::ng-deep tr.mat-mdc-row:hover .edit_btn,
+::ng-deep tr.mat-mdc-row:hover .delete_btn,
+::ng-deep tr.mat-mdc-row:hover mat-icon {
+  color: #080808 !important;
 } 
