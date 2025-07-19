@@ -13,7 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.Instant;
 import java.util.*;
 
 @Service
@@ -60,8 +61,8 @@ public class OrderService {
             Order.OrderStatus status,
             Order.PaymentStatus paymentStatus,
             Order.ShippingStatus shippingStatus,
-            LocalDateTime startDate,
-            LocalDateTime endDate) {
+            Instant startDate,
+            Instant endDate) {
         
         Specification<Order> spec = Specification.where(null);
         
@@ -78,11 +79,11 @@ public class OrderService {
         }
         
         if (startDate != null) {
-            spec = spec.and((root, query, builder) -> builder.greaterThanOrEqualTo(root.get("orderDate"), startDate));
+            spec = spec.and((root, query, builder) -> builder.greaterThanOrEqualTo(root.get("createdAt"), startDate));
         }
         
         if (endDate != null) {
-            spec = spec.and((root, query, builder) -> builder.lessThanOrEqualTo(root.get("orderDate"), endDate));
+            spec = spec.and((root, query, builder) -> builder.lessThanOrEqualTo(root.get("createdAt"), endDate));
         }
         
         return orderRepository.findAll(spec, pageable);
@@ -96,15 +97,15 @@ public class OrderService {
         return orderRepository.findTopByOrderByCreatedAtDesc(limit);
     }
     
-    public Map<String, Object> getOrderStatistics(LocalDateTime startDate, LocalDateTime endDate) {
+    public Map<String, Object> getOrderStatistics(Instant startDate, Instant endDate) {
         Map<String, Object> stats = new HashMap<>();
         
         // Set date range if not provided
         if (startDate == null) {
-            startDate = LocalDateTime.now().minusDays(30);
+            startDate = Instant.now().minusSeconds(2592000);
         }
         if (endDate == null) {
-            endDate = LocalDateTime.now();
+            endDate = Instant.now();
         }
         
         List<Order> orders = getOrdersByDateRange(startDate, endDate);
@@ -203,7 +204,7 @@ public class OrderService {
     public Order createOrder(Order order) {
         // Generate order number
         order.setOrderNumber("ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-        order.setOrderDate(LocalDateTime.now());
+        order.setOrderDate(Instant.now());
         
         // Validate stock and update quantities
         for (OrderItem item : order.getOrderItems()) {
@@ -261,7 +262,7 @@ public class OrderService {
 
         try {
             order.setStatus(status);
-            order.setUpdatedAt(LocalDateTime.now());
+            order.setUpdatedAt(Instant.now());
             Order savedOrder = orderRepository.save(order);
             System.out.println("Order status updated successfully to: " + savedOrder.getStatus());
             // Return the fully loaded order for DTO
@@ -304,7 +305,7 @@ public class OrderService {
         }
     }
     
-    public List<Order> getOrdersByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
+    public List<Order> getOrdersByDateRange(Instant startDate, Instant endDate) {
         return orderRepository.findByOrderDateBetween(startDate, endDate);
     }
     
@@ -312,7 +313,7 @@ public class OrderService {
         return orderRepository.findByStatus(status);
     }
     
-    public BigDecimal calculateTotalSales(LocalDateTime startDate, LocalDateTime endDate) {
+    public BigDecimal calculateTotalSales(Instant startDate, Instant endDate) {
         List<Order> orders = getOrdersByDateRange(startDate, endDate);
         return orders.stream()
                 .map(Order::getTotalAmount)

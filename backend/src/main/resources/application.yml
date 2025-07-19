@@ -1,6 +1,9 @@
+# =====================
+# Base Configuration
+# =====================
 spring:
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}  # Sẽ được lấy từ .env khi deploy
+    active: ${SPRING_PROFILES_ACTIVE:prod}  # Default to prod for Railway
   application:
     name: sales-backend
   datasource:
@@ -75,9 +78,9 @@ springdoc:
 app:
   name: ${APP_NAME:Sales Application}
   version: ${APP_VERSION:1.0.0}
-  environment: ${APP_ENVIRONMENT:development}
+  environment: ${APP_ENVIRONMENT:production}
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:3000}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:3000, hades-clothing.up.railway.app, https://hades-clothing-fe.vercel.app/}
   file:
     upload:
       max-size: 10MB
@@ -91,6 +94,9 @@ app:
     low-stock-threshold: 10
     auto-reorder: false
 
+# ---
+# Dev, prod, and local profiles remain unchanged below
+
 ---
 
 spring:
@@ -102,7 +108,7 @@ spring:
     username: root
     password:
   jpa:
-    show-sql: true
+    show-sql: false
     hibernate:
       ddl-auto: validate
   cache:
@@ -122,9 +128,9 @@ spring:
     activate:
       on-profile: prod
   datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    url: ${MYSQL_URL}
+    username: ${MYSQLUSER}
+    password: ${MYSQLPASSWORD}
   jpa:
     show-sql: false
     hibernate:
@@ -132,6 +138,7 @@ spring:
   cache:
     type: simple
     cache-names: products,users,orders,customers
+
 
 logging:
   level:
@@ -145,27 +152,27 @@ jwt:
 
 ---
 
-spring:
-  config:
-    activate:
-      on-profile: local
-  datasource:
-    url: jdbc:h2:mem:testdb
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-  jpa:
-    show-sql: true
-    hibernate:
-      ddl-auto: create-drop
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
-        format_sql: true
-  cache:
-    type: simple
-    cache-names: products,users,orders,customers
+#spring:
+#  config:
+#    activate:
+#      on-profile: local
+#  datasource:
+#    url: jdbc:h2:mem:testdb
+#    username: sa
+#    password:
+#    driver-class-name: org.h2.Driver
+#  h2:
+#    console:
+#      enabled: true
+#      path: /h2-console
+#  jpa:
+#    show-sql: true
+#    hibernate:
+#      ddl-auto: create-drop
+#    properties:
+#      hibernate:
+#        dialect: org.hibernate.dialect.H2Dialect
+#        format_sql: true
+#  cache:
+#    type: simple
+#    cache-names: products,users,orders,customers

@@ -17,7 +17,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Optional;
 
 @Service
@@ -50,7 +50,7 @@ public class AuthService {
         
         // Update last login
         if (user != null) {
-            user.setLastLogin(LocalDateTime.now());
+            user.setLastLogin(Instant.now());
             userRepository.save(user);
         }
         

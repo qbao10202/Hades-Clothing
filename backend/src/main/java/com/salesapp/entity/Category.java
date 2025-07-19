@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "categories")
@@ -34,6 +34,13 @@ public class Category {
     @Column(name = "image_url")
     private String imageUrl;
     
+    @Column(name = "image_content_type")
+    private String imageContentType;
+
+    @Lob
+    @Column(name = "image_data", columnDefinition = "LONGBLOB")
+    private byte[] imageData;
+    
     @Column(name = "parent_id")
     private Long parentId;
     
@@ -45,7 +52,7 @@ public class Category {
     
     @CreatedDate
     @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private Instant createdAt;
     
     // Constructors
     public Category() {}
@@ -96,6 +103,19 @@ public class Category {
         this.imageUrl = imageUrl;
     }
     
+    public String getImageContentType() {
+        return imageContentType;
+    }
+    public void setImageContentType(String imageContentType) {
+        this.imageContentType = imageContentType;
+    }
+    public byte[] getImageData() {
+        return imageData;
+    }
+    public void setImageData(byte[] imageData) {
+        this.imageData = imageData;
+    }
+    
     public Long getParentId() {
         return parentId;
     }
@@ -120,11 +140,11 @@ public class Category {
         isActive = active;
     }
     
-    public LocalDateTime getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
     
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 } 

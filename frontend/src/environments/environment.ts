@@ -1,6 +1,7 @@
 export const environment = {
   production: false,
   apiUrl: '/api',
+  // apiUrl: 'https://hades-clothing-be-production.up.railway.app/api',
   stripePublicKey: 'pk_test_your-stripe-public-key',
   paypalClientId: 'your-paypal-client-id',
   appName: 'Sales Application',
@@ -18,5 +19,6 @@ export const environment = {
   },
   cache: {
     ttl: 300000 // 5 minutes
-  }
+  },
+  // NOTE: For production, apiUrl should be set to the deployed backend URL in environment.prod.ts
 }; 

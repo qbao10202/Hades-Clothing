@@ -5,7 +5,7 @@ import com.salesapp.entity.OrderItem;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -16,7 +16,7 @@ public class OrderResponseDTO {
     private String customerName;
     private String customerEmail;
     private String customerPhone;
-    private LocalDateTime orderDate;
+    private Instant orderDate;
     private Order.OrderStatus status;
     private Order.PaymentStatus paymentStatus;
     private Order.ShippingStatus shippingStatus;
@@ -32,8 +32,8 @@ public class OrderResponseDTO {
     private String trackingNumber;
     private String notes;
     private List<OrderItemResponseDTO> orderItems;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private Instant createdAt;
+    private Instant updatedAt;
 
     public static OrderResponseDTO fromEntity(Order order) {
         OrderResponseDTO dto = new OrderResponseDTO();

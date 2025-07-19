@@ -4,6 +4,8 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { CategoryService } from '../../services/category.service';
 import { Category } from '../../models';
 import { environment } from '../../../environments/environment';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { CategoryAdminComponent } from './category-admin.component';
 
 @Component({
   selector: 'app-category-form-modal',
@@ -22,6 +24,7 @@ export class CategoryFormModalComponent implements OnInit {
     private formBuilder: FormBuilder,
     private categoryService: CategoryService,
     public dialogRef: MatDialogRef<CategoryFormModalComponent>,
+    private snackBar: MatSnackBar,
     @Inject(MAT_DIALOG_DATA) public data: { category?: Category }
   ) {
     this.isEdit = !!data?.category;
@@ -68,7 +71,7 @@ export class CategoryFormModalComponent implements OnInit {
     });
 
     if (category.imageUrl) {
-      this.imagePreview = this.getCategoryImageUrl(category.imageUrl);
+      this.imagePreview = this.getCategoryImageUrl(category);
     }
   }
 
@@ -103,6 +106,7 @@ export class CategoryFormModalComponent implements OnInit {
   }
 
   onSave(): void {
+    console.log('onSave called');
     if (this.categoryForm.valid) {
       const formValue = this.categoryForm.value;
       const categoryData: Partial<Category> = {
@@ -113,59 +117,40 @@ export class CategoryFormModalComponent implements OnInit {
         isActive: formValue.status === 'active',
         parentId: formValue.parentCategory ? parseInt(formValue.parentCategory) : undefined
       };
-      // Instead of handling upload here, return both data and file to parent
-      this.dialogRef.close({ categoryData, imageFile: this.selectedImage });
+      if (this.isEdit && this.data.category?.id) {
+        this.updateCategory(categoryData);
+      } else {
+        this.createCategory(categoryData);
+      }
     } else {
       this.markFormGroupTouched();
     }
   }
-
-  private createCategory(categoryData: Partial<Category>): void {
-    this.categoryService.createCategory(categoryData).subscribe({
+private createCategory(categoryData: Partial<Category>): void {
+    this.categoryService.createCategoryWithImage(categoryData, this.selectedImage || undefined).subscribe({
       next: (response) => {
-        // Upload image if selected
-        if (this.selectedImage && response.id) {
-          this.uploadImage(response.id, response);
-        } else {
-          this.dialogRef.close(response);
-        }
+          this.snackBar.open('Category added successfully!', 'Close', {
+        duration: 3000
+      });
+        this.dialogRef.close(response);
       },
       error: (error) => {
+             this.snackBar.open('Failed to create category', 'Close', {
+        duration: 3000
+      });
         console.error('Error creating category:', error);
-        // Handle error (show toast, etc.)
       }
     });
   }
 
   private updateCategory(categoryData: Partial<Category>): void {
     if (this.data.category?.id) {
-      this.categoryService.updateCategory(this.data.category.id, categoryData).subscribe({
+      this.categoryService.updateCategoryWithImage(this.data.category.id, categoryData, this.selectedImage || undefined).subscribe({
         next: (response) => {
-          // Upload image if selected
-          if (this.selectedImage) {
-            this.uploadImage(this.data.category!.id, response);
-          } else {
-            this.dialogRef.close(response);
-          }
+          this.dialogRef.close(response);
         },
         error: (error) => {
           console.error('Error updating category:', error);
-          // Handle error (show toast, etc.)
-        }
-      });
-    }
-  }
-
-  private uploadImage(categoryId: number, category: Category): void {
-    if (this.selectedImage) {
-      this.categoryService.uploadCategoryImage(categoryId, this.selectedImage).subscribe({
-        next: () => {
-          this.dialogRef.close(category);
-        },
-        error: (error) => {
-          console.error('Error uploading image:', error);
-          // Still close with the category data even if image upload fails
-          this.dialogRef.close(category);
         }
       });
     }
@@ -184,16 +169,11 @@ export class CategoryFormModalComponent implements OnInit {
     });
   }
 
-  getCategoryImageUrl(imagePath: string): string {
-    if (!imagePath) {
+  getCategoryImageUrl(category: Category): string {
+    if (!category || !category.id) {
       return 'assets/default-product.svg';
     }
-    
-    if (imagePath.startsWith('http')) {
-      return imagePath;
-    }
-    
-    return `${this.getBackendBaseUrl()}/uploads/categories/${imagePath}`;
+    return `${this.getBackendBaseUrl()}/api/categories/${category.id}/image`;
   }
 
   getBackendBaseUrl(): string {

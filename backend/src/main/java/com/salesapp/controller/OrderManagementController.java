@@ -17,7 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -46,8 +46,8 @@ public class OrderManagementController {
             @RequestParam(required = false) Order.OrderStatus status,
             @RequestParam(required = false) Order.PaymentStatus paymentStatus,
             @RequestParam(required = false) Order.ShippingStatus shippingStatus,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(required = false) Instant startDate,
+            @RequestParam(required = false) Instant endDate,
             Authentication authentication) {
         
         Sort sort = sortDir.equalsIgnoreCase("desc") ? 
@@ -130,8 +130,8 @@ public class OrderManagementController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('SELLER')")
     @Operation(summary = "Get order statistics", description = "Get order statistics for dashboard")
     public ResponseEntity<Map<String, Object>> getOrderStatistics(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+            @RequestParam(required = false) Instant startDate,
+            @RequestParam(required = false) Instant endDate) {
         
         Map<String, Object> stats = orderService.getOrderStatistics(startDate, endDate);
         return ResponseEntity.ok(stats);

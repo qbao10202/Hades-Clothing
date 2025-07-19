@@ -45,6 +45,7 @@ public class CartController {
         public Long productId;
         public Integer quantity;
         public Double price;
+        public String size;
     }
 
     @PostMapping("/migrate")
@@ -65,6 +66,7 @@ public class CartController {
             item.setQuantity(dto.quantity);
             item.setUnitPrice(BigDecimal.valueOf(dto.price));
             item.setTotalPrice(BigDecimal.valueOf(dto.price * dto.quantity));
+            item.setSize(dto.size); // set size
             return item;
         }).collect(Collectors.toList());
         order.setOrderItems(orderItems);
@@ -129,7 +131,8 @@ public class CartController {
             
             // Check if item exists
             OrderItem existing = cart.getOrderItems().stream()
-                    .filter(i -> i.getProduct().getId().equals(itemDto.productId))
+                    .filter(i -> i.getProduct().getId().equals(itemDto.productId) &&
+                                 ((i.getSize() == null && itemDto.size == null) || (i.getSize() != null && i.getSize().equals(itemDto.size))))
                     .findFirst().orElse(null);
                     
             if (existing != null) {
@@ -150,6 +153,7 @@ public class CartController {
                     throw new IllegalStateException("unitPrice is null for OrderItem with productId " + itemDto.productId);
                 }
                 existing.setTotalPrice(existing.getUnitPrice().multiply(BigDecimal.valueOf(existing.getQuantity())));
+                existing.setSize(itemDto.size); // update size if needed
             } else {
                 OrderItem item = new OrderItem();
                 item.setProduct(productRepository.findById(itemDto.productId).orElseThrow());
@@ -168,6 +172,7 @@ public class CartController {
                 item.setUnitPrice(price);
                 item.setTotalPrice(price.multiply(BigDecimal.valueOf(quantity)));
                 item.setOrder(cart);
+                item.setSize(itemDto.size); // set size
                 cart.getOrderItems().add(item);
             }
             cart.calculateTotals();
@@ -202,6 +207,7 @@ public class CartController {
         
         item.setQuantity(itemDto.quantity);
         item.setTotalPrice(item.getUnitPrice().multiply(BigDecimal.valueOf(itemDto.quantity)));
+        item.setSize(itemDto.size); // update size
         cart.calculateTotals();
         orderRepository.save(cart);
         CartResponseDTO response = convertToCartResponse(cart);
@@ -267,7 +273,7 @@ public class CartController {
             order.setCustomer(customer);
             order.setStatus(Order.OrderStatus.PENDING);
             order.setOrderNumber("ORDER-" + System.currentTimeMillis());
-            order.setOrderDate(java.time.LocalDateTime.now());
+            order.setOrderDate(java.time.Instant.now());
             order.setShippingAddress(checkoutDto.shippingAddress);
             order.setBillingAddress(checkoutDto.billingAddress);
             order.setShippingMethod(checkoutDto.shippingMethod);
@@ -344,6 +350,7 @@ public class CartController {
         dto.setPrice(item.getUnitPrice());
         dto.setCreatedAt(item.getCreatedAt());
         dto.setUpdatedAt(item.getUpdatedAt());
+        dto.setSize(item.getSize()); // set size
         
         // Include full product information
         Product product = item.getProduct();

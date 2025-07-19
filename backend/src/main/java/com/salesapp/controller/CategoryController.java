@@ -15,9 +15,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.core.io.ByteArrayResource;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +31,9 @@ public class CategoryController {
     
     @Autowired
     private CategoryRepository categoryRepository;
+    
+    @Autowired
+    private ObjectMapper objectMapper;
     
     @GetMapping
     @Operation(summary = "Get all categories", description = "Retrieve all product categories with pagination")
@@ -107,31 +111,93 @@ public class CategoryController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> uploadCategoryImage(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
         try {
-            // Save file to uploads directory
-            String uploadsDir = "uploads/categories/" + id;
-            Path uploadPath = Paths.get(uploadsDir);
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
-            String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-            Path filePath = uploadPath.resolve(filename);
-            Files.copy(file.getInputStream(), filePath);
-            // Update category imageUrl
             Optional<Category> categoryOpt = categoryRepository.findById(id);
             if (categoryOpt.isPresent()) {
                 Category category = categoryOpt.get();
-                category.setImageUrl("/" + uploadsDir + "/" + filename);
+                category.setImageContentType(file.getContentType());
+                category.setImageData(file.getBytes());
+                category.setImageUrl(file.getOriginalFilename()); // store filename for reference
                 categoryRepository.save(category);
-                // Return JSON response
                 return ResponseEntity.ok().body(java.util.Collections.singletonMap("message", "Image uploaded and category updated successfully"));
             } else {
-                // Delete the uploaded file if category not found
-                Files.deleteIfExists(filePath);
                 return ResponseEntity.status(404).body(java.util.Collections.singletonMap("error", "Category not found"));
             }
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body(java.util.Collections.singletonMap("error", "Failed to upload image: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/{id}/image")
+    @Operation(summary = "Serve category image from DB", description = "Serve a category image as binary data from the database")
+    public ResponseEntity<?> serveCategoryImage(@PathVariable Long id) {
+        Optional<Category> categoryOpt = categoryRepository.findById(id);
+        if (categoryOpt.isPresent() && categoryOpt.get().getImageData() != null) {
+            Category category = categoryOpt.get();
+            ByteArrayResource resource = new ByteArrayResource(category.getImageData());
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + category.getImageUrl() + "\"")
+                    .contentType(MediaType.parseMediaType(category.getImageContentType()))
+                    .body(resource);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Image not found");
+        }
+    }
+
+    @PostMapping(value = "/multipart", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> createCategoryMultipart(@RequestPart("category") String categoryJson,
+                                                    @RequestPart(value = "file", required = false) MultipartFile file) {
+        try {
+            Category category = objectMapper.readValue(categoryJson, Category.class);
+            if (file != null && !file.isEmpty()) {
+                category.setImageContentType(file.getContentType());
+                category.setImageData(file.getBytes());
+                category.setImageUrl(file.getOriginalFilename());
+            } else {
+                // No image provided, leave image fields null
+                category.setImageContentType(null);
+                category.setImageData(null);
+                category.setImageUrl(null);
+            }
+            Category savedCategory = categoryRepository.save(category);
+            return ResponseEntity.ok(savedCategory);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Failed to create category: " + e.getMessage());
+        }
+    }
+
+    @PutMapping(value = "/{id}/multipart", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updateCategoryMultipart(@PathVariable Long id,
+                                                    @RequestPart("category") String categoryJson,
+                                                    @RequestPart(value = "file", required = false) MultipartFile file) {
+        try {
+            Optional<Category> existingCategoryOpt = categoryRepository.findById(id);
+            if (existingCategoryOpt.isEmpty()) {
+                return ResponseEntity.status(404).body("Category not found");
+            }
+            Category existing = existingCategoryOpt.get();
+            Category category = objectMapper.readValue(categoryJson, Category.class);
+            category.setId(id);
+            // Preserve createdAt
+            category.setCreatedAt(existing.getCreatedAt());
+            if (file != null && !file.isEmpty()) {
+                category.setImageContentType(file.getContentType());
+                category.setImageData(file.getBytes());
+                category.setImageUrl(file.getOriginalFilename());
+            } else {
+                // Preserve existing image if not updated
+                category.setImageContentType(existing.getImageContentType());
+                category.setImageData(existing.getImageData());
+                category.setImageUrl(existing.getImageUrl());
+            }
+            Category updatedCategory = categoryRepository.save(category);
+            return ResponseEntity.ok(updatedCategory);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Failed to update category: " + e.getMessage());
         }
     }
 } 

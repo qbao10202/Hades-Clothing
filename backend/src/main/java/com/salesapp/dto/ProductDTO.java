@@ -1,7 +1,7 @@
 package com.salesapp.dto;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 public class ProductDTO {
@@ -25,8 +25,8 @@ public class ProductDTO {
     private String tags;
     private String sku;
     private Boolean isActive;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private Instant createdAt;
+    private Instant updatedAt;
     private List<ProductImageDTO> images;
     private CategoryDTO category;
 
@@ -71,10 +71,10 @@ public class ProductDTO {
     public void setSku(String sku) { this.sku = sku; }
     public Boolean getIsActive() { return isActive; }
     public void setIsActive(Boolean isActive) { this.isActive = isActive; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
     public List<ProductImageDTO> getImages() { return images; }
     public void setImages(List<ProductImageDTO> images) { this.images = images; }
     public CategoryDTO getCategory() { return category; }

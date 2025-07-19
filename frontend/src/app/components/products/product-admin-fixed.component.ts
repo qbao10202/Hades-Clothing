@@ -41,8 +41,8 @@ export class ProductAdminComponent implements OnInit {
     this.productService.getCategories().subscribe({
       next: (cats: Category[]) => this.categories = cats,
       error: (err: any) => {
-        this.errorMessage = 'Không thể tải danh mục sản phẩm.';
-        this.snackBar.open(this.errorMessage, 'Đóng', { duration: 4000 });
+        this.errorMessage = 'Can not loading categories.';
+        this.snackBar.open(this.errorMessage, 'Close', { duration: 4000 });
       }
     });
   }
@@ -62,8 +62,8 @@ export class ProductAdminComponent implements OnInit {
         this.errorMessage = '';
       },
       error: (err: any) => {
-        this.errorMessage = 'Không thể tải sản phẩm.';
-        this.snackBar.open(this.errorMessage, 'Đóng', { duration: 4000 });
+        this.errorMessage = 'Can not loading products.';
+        this.snackBar.open(this.errorMessage, 'Close', { duration: 4000 });
       }
     });
   }
@@ -96,18 +96,27 @@ export class ProductAdminComponent implements OnInit {
         const { product, imageFile } = result;
         this.productService.createProduct(product).subscribe({
           next: (created: ProductDTO) => {
+            // Show notification and update data source immediately after product creation
+            this.snackBar.open('Product added successfully', 'Close', { duration: 3000 });
+            this.dataSource.data = [created, ...this.dataSource.data];
+            
+            // Handle image upload silently in the background (if any)
             if (imageFile) {
-              this.productService.uploadProductImage(created.id!, imageFile).subscribe(() => {
-                this.dataSource.data = [created, ...this.dataSource.data];
-                this.snackBar.open('Thêm sản phẩm thành công', 'Đóng', { duration: 3000 });
+              this.productService.uploadProductImage(created.id!, imageFile).subscribe({
+                next: () => {
+                  // Refresh to show the new image (silently)
+                  this.loadProducts();
+                },
+                error: (err: any) => {
+                  console.error('Error uploading image:', err);
+                  // Only show error notification if image upload fails
+                  this.snackBar.open('Product created but image upload failed', 'Close', { duration: 3000 });
+                }
               });
-            } else {
-              this.dataSource.data = [created, ...this.dataSource.data];
-              this.snackBar.open('Thêm sản phẩm thành công', 'Đóng', { duration: 3000 });
             }
           },
           error: (err: any) => {
-            this.snackBar.open('Lỗi khi thêm sản phẩm', 'Đóng', { duration: 3000 });
+            this.snackBar.open('Error adding product', 'Close', { duration: 3000 });
           }
         });
       }
@@ -127,22 +136,29 @@ export class ProductAdminComponent implements OnInit {
         const { product: updated, imageFile } = result;
         this.productService.updateProduct(product.id!, updated).subscribe({
           next: (updatedProduct: ProductDTO) => {
-            if (imageFile) {
-              this.productService.uploadProductImage(updatedProduct.id!, imageFile).subscribe(() => {
+            // Show notification and update data source immediately after product update
+            this.snackBar.open('Update product successfully', 'Close', { duration: 3000 });
                 this.dataSource.data = this.dataSource.data.map((p: ProductDTO) => 
                   p.id === updatedProduct.id ? { ...p, ...updatedProduct } : p
                 );
-                this.snackBar.open('Cập nhật sản phẩm thành công', 'Đóng', { duration: 3000 });
+            
+            // Handle image upload silently in the background (if any)
+            if (imageFile) {
+              this.productService.uploadProductImage(updatedProduct.id!, imageFile).subscribe({
+                next: () => {
+                  // Refresh to show the new image (silently)
+                  this.loadProducts();
+                },
+                error: (err: any) => {
+                  console.error('Error uploading image:', err);
+                  // Only show error notification if image upload fails
+                  this.snackBar.open('Product updated but image upload failed', 'Close', { duration: 3000 });
+                }
               });
-            } else {
-              this.dataSource.data = this.dataSource.data.map((p: ProductDTO) => 
-                p.id === updatedProduct.id ? { ...p, ...updatedProduct } : p
-              );
-              this.snackBar.open('Cập nhật sản phẩm thành công', 'Đóng', { duration: 3000 });
             }
           },
           error: (err: any) => {
-            this.snackBar.open('Lỗi khi cập nhật sản phẩm', 'Đóng', { duration: 3000 });
+            this.snackBar.open('Error updating product', 'Close', { duration: 3000 });
           }
         });
       }
@@ -164,10 +180,10 @@ export class ProductAdminComponent implements OnInit {
         this.productService.deleteProduct(product.id!).subscribe({
           next: () => {
             this.dataSource.data = this.dataSource.data.filter((p: ProductDTO) => p.id !== product.id);
-            this.snackBar.open('Đã xóa sản phẩm', 'Đóng', { duration: 3000 });
+            this.snackBar.open('Deleted product!', 'Close', { duration: 3000 });
           },
           error: (err: any) => {
-            this.snackBar.open('Lỗi khi xóa sản phẩm', 'Đóng', { duration: 4000 });
+            this.snackBar.open('Error deleting product', 'Close', { duration: 4000 });
           }
         });
       }
@@ -180,7 +196,7 @@ export class ProductAdminComponent implements OnInit {
       width: '400px',
       data: {
         title: 'Delete  product?',
-        message: 'Điều này sẽ xóa vĩnh viễn các sản phẩm đã chọn khỏi kho của bạn.',
+        message: 'Delete the selected products?',
         itemName: selectedProducts.map((p: ProductDTO) => p.name).join(', ')
       }
     });
@@ -197,9 +213,9 @@ export class ProductAdminComponent implements OnInit {
             !selectedProducts.some((selected: ProductDTO) => selected.id === p.id)
           );
           this.selection.clear();
-          this.snackBar.open(`Đã xóa thành công ${selectedProducts.length} sản phẩm`, 'Đóng', { duration: 3000 });
+          this.snackBar.open(`Deleted ${selectedProducts.length} products successfully`, 'Close', { duration: 3000 });
         }).catch((error: any) => {
-          this.snackBar.open('Lỗi khi xóa một số sản phẩm', 'Đóng', { duration: 4000 });
+          this.snackBar.open('Error deleting some products', 'Close', { duration: 4000 });
         });
       }
     });
@@ -218,18 +234,27 @@ export class ProductAdminComponent implements OnInit {
         const { product, imageFile } = result;
         this.productService.createProduct(product).subscribe({
           next: (created: ProductDTO) => {
+            // Show notification and refresh immediately after product creation
+            this.snackBar.open('Add product successfully', 'Close', { duration: 3000 });
+            this.loadProducts();
+            
+            // Handle image upload silently in the background (if any)
             if (imageFile) {
-              this.productService.uploadProductImage(created.id!, imageFile).subscribe(() => {
+              this.productService.uploadProductImage(created.id!, imageFile).subscribe({
+                next: () => {
+                  // Refresh again after image upload to show the new image (silently)
                 this.loadProducts();
-                this.snackBar.open('Thêm sản phẩm thành công', 'Đóng', { duration: 3000 });
+                },
+                error: (err: any) => {
+                  console.error('Error uploading image:', err);
+                  // Only show error notification if image upload fails
+                  this.snackBar.open('Product created but image upload failed', 'Close', { duration: 3000 });
+                }
               });
-            } else {
-              this.loadProducts();
-              this.snackBar.open('Thêm sản phẩm thành công', 'Đóng', { duration: 3000 });
             }
           },
           error: (err: any) => {
-            this.snackBar.open('Lỗi khi thêm sản phẩm', 'Đóng', { duration: 3000 });
+            this.snackBar.open('Error adding product', 'Close', { duration: 3000 });
           }
         });
       }
@@ -257,21 +282,8 @@ export class ProductAdminComponent implements OnInit {
   // Image URL helper
   getProductImageUrl(product: ProductDTO): string {
     if (product.images && product.images.length > 0) {
-      const primaryImage = product.images.find((img: any) => img.isPrimary) || product.images[0];
-      const imageUrl = primaryImage.imageUrl;
-      
-      // If imageUrl is already a full URL, return it
-      if (imageUrl.startsWith('http')) {
-        return imageUrl;
-      }
-      
-      // If imageUrl starts with /uploads, prefix with backend host
-      if (imageUrl.startsWith('/uploads')) {
-        return `${this.getBackendBaseUrl()}${imageUrl}`;
-      }
-      
-      // Otherwise, construct the full URL
-      return `${this.getBackendBaseUrl()}/api/uploads/products/${product.id}/${imageUrl}`;
+      const filename = product.images[0].imageUrl;
+      return `${this.getBackendBaseUrl()}/api/products/${product.id}/images/${filename}`;
     }
     return 'assets/default-product.svg';
   }

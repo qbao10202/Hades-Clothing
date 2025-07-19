@@ -1,7 +1,7 @@
 package com.salesapp.dto;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public class CartItemResponseDTO {
     private Long id;
@@ -9,18 +9,19 @@ public class CartItemResponseDTO {
     private Long productId;
     private Integer quantity;
     private BigDecimal price;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private Instant createdAt;
+    private Instant updatedAt;
     private String productName;
     private String productSku;
     private ProductDTO product; // Include full product information
+    private String size;
 
     // Constructors
     public CartItemResponseDTO() {}
 
     public CartItemResponseDTO(Long id, Long userId, Long productId, Integer quantity, 
-                              BigDecimal price, LocalDateTime createdAt, LocalDateTime updatedAt, 
-                              String productName, String productSku, ProductDTO product) {
+                              BigDecimal price, Instant createdAt, Instant updatedAt, 
+                              String productName, String productSku, ProductDTO product, String size) {
         this.id = id;
         this.userId = userId;
         this.productId = productId;
@@ -31,6 +32,7 @@ public class CartItemResponseDTO {
         this.productName = productName;
         this.productSku = productSku;
         this.product = product;
+        this.size = size;
     }
 
     // Getters and Setters
@@ -74,19 +76,19 @@ public class CartItemResponseDTO {
         this.price = price;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 
-    public LocalDateTime getUpdatedAt() {
+    public Instant getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
+    public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
     }
 
@@ -112,5 +114,12 @@ public class CartItemResponseDTO {
 
     public void setProduct(ProductDTO product) {
         this.product = product;
+    }
+
+    public String getSize() {
+        return size;
+    }
+    public void setSize(String size) {
+        this.size = size;
     }
 }

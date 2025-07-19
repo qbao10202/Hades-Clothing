@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,7 +19,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
     Optional<Order> findByOrderNumber(String orderNumber);
     List<Order> findByCustomerId(Long customerId);
     List<Order> findByUserId(Long userId);
-    List<Order> findByOrderDateBetween(LocalDateTime startDate, LocalDateTime endDate);
+    List<Order> findByOrderDateBetween(Instant startDate, Instant endDate);
     List<Order> findByStatus(Order.OrderStatus status);
     boolean existsByOrderNumber(String orderNumber);
 

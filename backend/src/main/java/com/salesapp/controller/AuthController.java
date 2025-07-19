@@ -40,7 +40,9 @@ public class AuthController {
             RegisterResponse response = authService.register(registerRequest);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            // Return the error message in the response
+            RegisterResponse errorResponse = new RegisterResponse(e.getMessage(), null, null);
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
     

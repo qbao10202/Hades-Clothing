@@ -10,7 +10,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -67,15 +67,15 @@ public class User {
     private boolean phoneVerified = false;
     
     @Column(name = "last_login")
-    private LocalDateTime lastLogin;
+    private Instant lastLogin;
     
     @CreatedDate
     @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private Instant createdAt;
     
     @LastModifiedDate
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
     
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -153,19 +153,19 @@ public class User {
         this.isActive = enabled;
     }
     
-    public LocalDateTime getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
     
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
     
-    public LocalDateTime getUpdatedAt() {
+    public Instant getUpdatedAt() {
         return updatedAt;
     }
     
-    public void setUpdatedAt(LocalDateTime updatedAt) {
+    public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
     }
     
@@ -209,11 +209,11 @@ public class User {
         this.phoneVerified = phoneVerified;
     }
     
-    public LocalDateTime getLastLogin() {
+    public Instant getLastLogin() {
         return lastLogin;
     }
     
-    public void setLastLogin(LocalDateTime lastLogin) {
+    public void setLastLogin(Instant lastLogin) {
         this.lastLogin = lastLogin;
     }
     

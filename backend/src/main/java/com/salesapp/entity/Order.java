@@ -12,7 +12,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,7 +44,7 @@ public class Order {
     
     @CreatedDate
     @Column(name = "order_date")
-    private LocalDateTime orderDate;
+    private Instant orderDate;
     
     @Enumerated(EnumType.STRING)
     private OrderStatus status = OrderStatus.PENDING;
@@ -100,11 +100,11 @@ public class Order {
     
     @CreatedDate
     @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private Instant createdAt;
     
     @LastModifiedDate
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
     
     public enum OrderStatus {
         CART, PENDING, CONFIRMED, PROCESSING, SHIPPED, DELIVERED, CANCELLED, REFUNDED
@@ -125,7 +125,7 @@ public class Order {
         this.orderNumber = orderNumber;
         this.customer = customer;
         this.user = user;
-        this.orderDate = LocalDateTime.now();
+        this.orderDate = Instant.now();
     }
     
     // Helper methods
@@ -184,11 +184,11 @@ public class Order {
         this.user = user;
     }
     
-    public LocalDateTime getOrderDate() {
+    public Instant getOrderDate() {
         return orderDate;
     }
     
-    public void setOrderDate(LocalDateTime orderDate) {
+    public void setOrderDate(Instant orderDate) {
         this.orderDate = orderDate;
     }
     
@@ -312,19 +312,19 @@ public class Order {
         this.orderItems = orderItems;
     }
     
-    public LocalDateTime getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
     
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
     
-    public LocalDateTime getUpdatedAt() {
+    public Instant getUpdatedAt() {
         return updatedAt;
     }
     
-    public void setUpdatedAt(LocalDateTime updatedAt) {
+    public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
     }
 } 

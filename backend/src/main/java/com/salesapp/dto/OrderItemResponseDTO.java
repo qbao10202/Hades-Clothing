@@ -4,7 +4,7 @@ import com.salesapp.entity.OrderItem;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Data
 public class OrderItemResponseDTO {
@@ -16,8 +16,8 @@ public class OrderItemResponseDTO {
     private BigDecimal unitPrice;
     private BigDecimal totalPrice;
     private ProductDTO product;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private Instant createdAt;
+    private Instant updatedAt;
 
     public static OrderItemResponseDTO fromEntity(OrderItem item) {
         OrderItemResponseDTO dto = new OrderItemResponseDTO();

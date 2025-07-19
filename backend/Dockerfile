@@ -31,6 +31,8 @@ COPY --from=build /app/target/sales-backend-1.0.0.jar app.jar
 
 # Create logs directory
 RUN mkdir -p /app/logs && chown -R appuser:appuser /app
+# Ensure uploads directory exists and is writable by all users
+RUN mkdir -p /app/uploads/products && chmod -R 777 /app/uploads
 
 # Switch to non-root user
 USER appuser

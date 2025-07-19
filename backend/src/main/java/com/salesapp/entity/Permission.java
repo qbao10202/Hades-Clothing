@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "permissions")
@@ -33,11 +33,11 @@ public class Permission {
 
     @CreatedDate
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
     
     // Constructors
     public Permission() {
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = Instant.now();
     }
     
     public Permission(String name, String description, String resource, String action) {
@@ -89,11 +89,11 @@ public class Permission {
         this.action = action;
     }
     
-    public LocalDateTime getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
     
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 } 
