@@ -14,7 +14,6 @@ A full-stack sales management platform with a modern Angular frontend and robust
   - [Production (Docker)](#production-docker)
 - [Environment Variables](#environment-variables)
 - [API Documentation](#api-documentation)
-- [License](#license)
 
 ---
 
@@ -30,7 +29,6 @@ A full-stack sales management platform with a modern Angular frontend and robust
 - Dashboard with analytics and charts
 - File/image upload (local storage)
 - Caching (simple/Redis)
-- Prometheus metrics and health checks
 - Responsive, modern Angular UI (admin & user)
 - Dockerized for easy deployment
 
@@ -60,12 +58,11 @@ A full-stack sales management platform with a modern Angular frontend and robust
 │   ├── src/
 │   ├── Dockerfile
 │   └── ...
-├── frontend/        # Angular frontend (UI, SPA)
+├── frontend/        # Angular frontend (UI)
 │   ├── src/
 │   ├── Dockerfile
 │   └── ...
 ├── docker-compose.yml
-├── env.example      # Example environment variables
 └── ...
 ```
 
@@ -80,8 +77,8 @@ A full-stack sales management platform with a modern Angular frontend and robust
 - Node.js (v18+), npm
 - Java 17+
 - Maven
-- MySQL (or Docker)
-- Redis (optional, for caching)
+- MySQL 
+- Redis 
 
 #### 1. Clone the repository
 
@@ -142,7 +139,6 @@ See `env.example` for all available variables. Key ones:
 - Product management
 - Category management
 - Order management
+- Statitics revenues
 
-## License
 
-This project is licensed under the MIT License.
